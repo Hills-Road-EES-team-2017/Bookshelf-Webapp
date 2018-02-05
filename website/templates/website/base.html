@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'website/style.css' %}" />
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<options>
+    <a href="{% url 'homepage' %}">Take out</a> |
+    <a href="{% url 'taken' %}">Return</a> |
+    About us |
+    Contact |
+    Maps |
+    <user>{{current_user}}</user>: <a href="{% url 'login' %}">Logout</a>
+</options>
+<div id="content">{% block body %}{% endblock %}</div>
+</html>

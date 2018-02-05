@@ -1,0 +1,32 @@
+{% extends 'website/base.html' %}
+
+{% block title %}Homepage{% endblock %}
+
+{% block body %}
+<body>
+<h1>Welcome to the homepage</h1>
+
+<form action="{% url 'homepage' %}" method="post">
+{% csrf_token %}
+    <p>Search for a title or author:
+        <br>
+        <input type="text" name="search" value={{searched}}>
+        <input type="submit" value="Search" />
+    </p>
+
+</form>
+
+{% if book_list %}
+    <ul>
+        <li>Title <author>Author</author> <state>Available?</state></li> <br>
+        {% for book in book_list %}
+        <li><a href="{% url 'detail' book.title %}">{{ book.title }}</a>
+            <author>{{ book.author }}</author>
+            <state> {{ book.get_book_state_display }}</state>
+        </li>
+        {% endfor%}
+    </ul>
+{% endif %}
+
+</body>
+{% endblock %}

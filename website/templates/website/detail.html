@@ -1,0 +1,14 @@
+{% extends 'website/base.html' %}
+
+{% block title %}book.title{% endblock %}
+
+{% block body %}
+<info>
+    <h1>{{ book.title }}</h1>
+    {% if taking %}
+        <a href="{% url 'LEDs' book.title %}">Take book</a>
+    {% else %}
+    <a href="{% url 'LEDs' book.title %}">Return book</a>
+    {% endif %}
+</info>
+{% endblock %}
