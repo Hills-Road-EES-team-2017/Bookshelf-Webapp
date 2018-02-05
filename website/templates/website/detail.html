@@ -6,7 +6,11 @@
 <info>
     <h1>{{ book.title }}</h1>
     {% if taking %}
-        <a href="{% url 'LEDs' book.title %}">Take book</a>
+        {% if book.book_state == 0 %}
+            <a href="{% url 'LEDs' book.title %}">Take book</a>
+        {% else %}
+            Take book
+        {% endif %}
     {% else %}
     <a href="{% url 'LEDs' book.title %}">Return book</a>
     {% endif %}

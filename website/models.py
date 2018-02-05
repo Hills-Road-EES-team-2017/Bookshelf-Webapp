@@ -1,6 +1,5 @@
 from django.db import models
-import enum
-
+from datetime import datetime
 
 class Book(models.Model):
 
@@ -24,12 +23,13 @@ class Book(models.Model):
 
     title = models.CharField(max_length=50)
     author = models.CharField(max_length=30)
-    partition = models.ForeignKey('Partition', on_delete=models.SET(0))
+    partition = models.ForeignKey('Partition', on_delete=models.SET(0), default=0)
     book_state = models.IntegerField(choices=states, default=0)
     book_width = models.IntegerField()
     partition_depth = models.IntegerField() #distance_from_partition
-    customer = models.ForeignKey('Customer', on_delete=models.SET(0))
-    last_updated = models.DateTimeField()
+    customer = models.ForeignKey('Customer', on_delete=models.SET(0), default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+    last_taken = models.DateTimeField(default=datetime.now)
     colour = models.CharField(max_length=1, choices=colours, default="R")
     def __str__(self):
         return self.title

@@ -7,15 +7,20 @@
 <h1>Your books:</h1>
 
 {% if book_list %}
-    <ul>
-        <li>Title <author>Author</author> <state>Available?</state></li> <br>
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Time taken</th>
+        </tr>
         {% for book in book_list %}
-        <li><a href="{% url 'detail' book.title %}">{{ book.title }}</a>
-            <author>{{ book.author }}</author>
-            <state>{{ book.last_updated }}</state>
-        </li>
-        {% endfor%}
-    </ul>
+        <tr>
+            <td><a href="{% url 'detail' book.title %}">{{ book.title }}</a></td>
+            <td>{{ book.author }}</td>
+            <td>{{book.last_taken}}</td>
+        </tr>
+        {% endfor %}
+    </table>
 {% else %}
 <p>You have no books!</p>
 {% endif %}

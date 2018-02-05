@@ -1,45 +1,65 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
-from django.db.models import Q
+from datetime import datetime
+
+
 
 from .models import Book, Customer, Partition
 
+# Global variables (I never read a style guide...)
 class v(object):
+    # Tracks whether a user is logged in or not
     current_user = ""
+    # Taking = True, returning = False
     usage = True
 
+
+
 def check_login():
+    # Redirects to login page if there is no user
     if v.current_user == "":
         return True
     else:
         return False
 
 
-def strips(book_id): #Function from LED team
-    print ("LEDS TURNED ON FOR BOOK", book_id) #...number x
 
-def login(request):  #Login page
-    #Starting error message (none)
+def find_partition(width):
+    #Gets all partitions ordered from lowest distance away
+    for partition in Partition.objects.all().order_by('user_distance'):
+        if partition.partition_space >= width:
+            return partition
+            break
+
+
+
+def strips(book_id):  # Function from LED team
+    print ("LEDS TURNED ON FOR BOOK", book_id)
+
+
+
+def login(request):  # Login page
     v.current_user = ""
+    # Starting error message (none)
     error_message = ""
     username = ""
     userpass = ""
     try:
-        #Returns error if name entered not on database
         username = request.POST['username']
         userpass = request.POST['userpass']
+        # Returns error if name entered not on database
         user = Customer.objects.get(surname=username)
 
         if user.password == userpass:
-            #Loads homepage URL
             v.current_user = username
+            # Loads homepage URL
             return redirect('select')
         else:
-            #Re-renders login page with error message (password incorrect)
+            # Re-renders login page with error message (password incorrect)
             error_message = 'Incorrect password or username'
             return render(request, 'website/login.html', {'error_message': error_message})
     except:
-        #If not the first load of the page with defaul values of ""
+        # If its just the default values of "" no message is displayed
         if  username == "":
             error_message = ""
         else:
@@ -62,12 +82,12 @@ def taken(request):
 
     if check_login():
         return redirect('login')
-
+    # User is returing books
     v.usage = False
-    book_list = []
     customer = Customer.objects.get(surname=v.current_user)
-    book_list = Book.objects.filter(customer=customer.id)
-    return render(request, 'website/taken.html', {'book_list': book_list})
+    # Retrieves book list of customers books where state is taken
+    book_list = Book.objects.filter(customer=customer.id, book_state=2)
+    return render(request, 'website/taken.html', {'book_list': book_list, 'current_user': v.current_user})
 
 
 
@@ -75,7 +95,6 @@ def homepage(request):
 
     if check_login():
         return redirect('login')
-        #pass
 
     book_list = []
     search = ""
@@ -104,18 +123,45 @@ def detail(request, book_title):
 
 
 
-def LEDs(request, book_title): #Pass parameter for LED function?
+def LEDs(request, book_title):
 
     if check_login():
         return redirect('login')
 
-
-    #########################
-
-    #Code to update database
-
-    #########################
     book = get_object_or_404(Book, title=book_title)
+
+    # If the customer is taking a book
+    if v.usage:
+        # Set to taking
+        book.book_state = 1
+        book.save()
+        if True:  # If button pressed within time
+            # Set to taken
+            book.book_state = 2
+            book.customer = Customer.objects.get(surname=v.current_user)
+            book.last_taken = datetime.now()
+            book.save()
+            print("book taken")
+        else:
+            # Set to available again
+            book.book_state = 0
+            book.save()
+    # If the customer is returning a book
+    else:
+        # Set to returning
+        book.book_state = 3
+        book.save()
+        if True: # If button pressed within time
+            # Set to available
+            book.book_state = 0
+            book.partition = find_partition(book.book_width)
+            book.save()
+        else:
+            # Set to taken again
+            book.book_state = 2
+            book.save()
+
+
     strips(book.id)
 
     partition = get_object_or_404(Partition, pk=int(book.partition.id))

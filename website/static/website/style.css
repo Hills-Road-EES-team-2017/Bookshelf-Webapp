@@ -1,3 +1,5 @@
+/* general */
+
 h1 {
     color: black;
 }
@@ -23,6 +25,8 @@ options {
     color: #0000FF;
 }
 
+/* Selection page */
+
 selections{
     color: red;
     text-align: center;
@@ -31,28 +35,66 @@ selections{
     font-size: 100px;
 }
 
+/* Homepage specific */
+
 searchbar {
     color: #808080;
-}
-
-li {
-    font-size: 20px;
-    position: relative;
-    left: 0px;
-}
-
-author {
-    position: relative;
-    left: 100px;
-}
-state {
-    position: relative;
-    left: 200px;
+    font-style: oblique;
 }
 
 error {
     color: red;
 }
+
 user {
     color: #005500;
+}
+
+table {
+    table-layout: fixed;
+    border-collapse: collapse;
+    width: 100%;
+    border: 3px solid black;
+    font-size: 30px
+}
+
+thead th:nth-child(1) {
+    width: 20%
+}
+
+thead th:nth-child(2) {
+    width: 20%
+}
+
+thead th:nth-child(3) {
+    width: 20%
+}
+
+th, td {
+    padding: 20px;
+    border: 2px solid black;
+}
+
+tbody td {
+    text-align: center;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #ABCDEF;
+}
+
+td.available {
+    color: green;
+}
+
+td.interim {
+    color: orange;
+}
+
+td.taken {
+    color: red;
+}
+
+td.reserved {
+    color: blue;
 }
