@@ -5,21 +5,12 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>LED page</title>
+    <title>Finished</title>
 </head>
 
 <body>
-<h1>LED page</h1>
-    You have just called the LED function!! Yay!
+<h1>LED turned off!</h1>
 <br>
-
-<h2>{{book.title}}</h2>
-Section: {{ partition.partition_position }}
-<br>
-colour: {{ book.get_colour_display }} <br>
-<br>
-<br>
-<a href="{% url 'off' book.title %}">Done</a>
-
+<a href="{% url 'login' %}">Okay!</a>
 </body>
 </html>
