@@ -35,7 +35,7 @@ class Book(models.Model):
         return self.title
     
 class Partition(models.Model):
-    partition_position = models.CharField(max_length=1)
+    section = models.ForeignKey('Section', on_delete=models.SET(0), default=0)
     partition_space = models.IntegerField()
     shelf_distance = models.IntegerField()
     user_distance = models.IntegerField() #distance_from_user
@@ -50,3 +50,7 @@ class Customer(models.Model):
     def __str__(self):
         return self.surname
     
+class Section(models.Model):
+    name = models.CharField(max_length=1)
+    def __str__(self):
+        return self.name
