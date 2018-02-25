@@ -12,12 +12,14 @@
             <th>Title</th>
             <th>Author</th>
             <th>Time taken</th>
+            <th>State</th>
         </tr>
         {% for book in book_list %}
         <tr>
             <td><a href="{% url 'detail' book.title %}">{{ book.title }}</a></td>
             <td>{{ book.author }}</td>
             <td>{{book.last_taken}}</td>
+            <td>{{book.get_book_state_display}}</td>
         </tr>
         {% endfor %}
     </table>
