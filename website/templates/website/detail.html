@@ -7,12 +7,12 @@
     <h1>{{ book.title }}</h1>
     {% if taking %}
         {% if book.book_state == 0 %}
-            <a href="{% url 'take' book.title %}">Take book</a>
+            <a href="{% url 'basket' book_id=book.id %}">Take book</a>
         {% else %}
             Take book
         {% endif %}
     {% else %}
-    <a href="{% url 'return' book.title %}">Return book</a>
+    <a href="{% url 'basket' book_id=book.id %}">Return book</a>
     {% endif %}
 </info>
 {% endblock %}

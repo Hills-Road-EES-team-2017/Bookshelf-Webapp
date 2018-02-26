@@ -12,7 +12,11 @@ class v(object):
     current_user = ""
     # Taking = True, returning = False
     usage = True
+    basket = []
 
+
+def basket(request):
+    return render(request, 'website/basket.html', {"basket": v.basket})
 
 
 def check_login():
@@ -121,86 +125,85 @@ def detail(request, book_title):
     return render(request, 'website/detail.html', {'book': book, 'current_user': v.current_user, 'taking': taking})
 
 
-def take(request, book_title):
+def basket_direct(request):
 
     if check_login():
         return redirect('login')
 
-    book = get_object_or_404(Book, title=book_title)
-
-    # Set to taking
-    book.book_state = 1
-    book.customer = Customer.objects.get(surname=v.current_user)
-    colours = ["Red", "Yellow", "Green", "Cyan", "Blue", "Magenta", "White"]
-    for book_colour in (
-            Book.objects.filter(partition=book.partition, book_state=1) | Book.objects.filter(partition=book.partition,
-                                                                                         book_state=3)):
-        if book_colour.colour in colours:
-            colours.remove(book_colour.colour)
-    book.colour = colours[0]
-    book.save()
-
-    strips(book.id)
-
-    partition = get_object_or_404(Partition, pk=int(book.partition.id))
-    return render(request, 'website/LEDs.html', {'book': book, 'partition': partition})
+    return render(request, 'website/basket.html', {'basket': v.basket})
 
 
-def return_(request, book_title):
+def basket(request, book_id):
 
     if check_login():
         return redirect('login')
 
-    book = get_object_or_404(Book, title=book_title)
+    book = get_object_or_404(Book, pk=book_id)
 
-    # Set to returning
-    book.book_state = 3
-    book.partition = find_partition(book.book_width)
+    if v.usage: # If taking book
+        # Set to taking
+        book.book_state = 1
+        book.customer = Customer.objects.get(surname=v.current_user)
+
+    else:
+        # Set to returning
+        book.book_state = 3
+        book.partition = find_partition(book.book_width)
+
+
     colours = ["Red","Yellow", "Green", "Cyan", "Blue", "Magenta", "White"]
     for book_colour in (Book.objects.filter(partition=book.partition, book_state=1)|Book.objects.filter(partition=book.partition, book_state = 3)):
         if book_colour.colour in colours:
             colours.remove(book_colour.colour)
     book.colour = colours[0]
     book.save()
+    v.basket.append(book)
+    print (v.basket)
 
     strips(book.id)
+    return render(request, 'website/basket.html', {'basket': v.basket})
 
-    partition = get_object_or_404(Partition, pk=int(book.partition.id))
-    return render(request, 'website/LEDs.html', {'book': book, 'partition': partition})
+def map(request):
+    sections = []
+    for book in v.basket:
+        sections.append(book.partition.section.name)
+    zipped_books = zip(v.basket, sections)
+    return render(request, 'website/maps.html', {'basket': zipped_books})
 
 
-def off(request, book_title):
-    book = get_object_or_404(Book, title=book_title)
-    partition = get_object_or_404(Partition, pk=book.partition.id)
-    if v.usage:
-        # Set to taken
-        book.book_state = 2
-        book.last_taken = datetime.now()
-        book.last_updated = datetime.now()
-        # Space on the partition increased
-        partition.partition_space += book.book_width
-        # All other books on partition
-        further_books = Book.objects.filter(partition=book.partition)
-        for other in further_books:
-            # Books on the partition further right than selected boo
-            if other.partition_depth>book.partition_depth:
-                # Moved to the left
-                other.partition_depth -= book.partition_depth
-                other.save()
+def off(request):
+    for book in v.basket:
+        partition = get_object_or_404(Partition, pk=book.partition.id)
+        if book.book_state == 1:
+            # Set to taken
+            book.book_state = 2
+            book.last_taken = datetime.now()
+            book.last_updated = datetime.now()
+            # Space on the partition increased
+            partition.partition_space += book.book_width
+            # All other books on partition
+            further_books = Book.objects.filter(partition=book.partition)
+            for other in further_books:
+                # Books on the partition further right than selected boo
+                if other.partition_depth>book.partition_depth:
+                    # Moved to the left
+                    other.partition_depth -= book.partition_depth
+                    other.save()
 
-        book.save()
-        partition.save()
-    else:
-        # Set to available
-        book.book_state = 0
-        book.last_updated = datetime.now()
-        partition.partition_space -= book.book_width
-        further_books = Book.objects.filter(partition=book.partition)
-        book.partition_depth = 0
-        book.save()
-        for other in further_books:
-            book.partition_depth += other.book_width
-        book.save()
-        partition.save()
+            book.save()
+            partition.save()
+        elif book.book_state == 3:
+            # Set to available
+            book.book_state = 0
+            book.last_updated = datetime.now()
+            partition.partition_space -= book.book_width
+            further_books = Book.objects.filter(partition=book.partition)
+            book.partition_depth = 0
+            book.save()
+            for other in further_books:
+                book.partition_depth += other.book_width
+            book.save()
+            partition.save()
+    v.basket = []
 
-    return render(request, 'website/off.html', {'book': book})
+    return render(request, 'website/off.html')

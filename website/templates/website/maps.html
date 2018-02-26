@@ -5,19 +5,21 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>LED page</title>
+    <title>Map page</title>
 </head>
 
 <body>
 <h1>Map page</h1>
 
-<h2>{{book.title}}</h2>
-Section: {{ partition.section }}
+{% for book, section in basket %}
+<h>{{book.title}}</h>
+Section: {{ section }}
 <br>
 colour: {{ book.get_colour_display }} <br>
 <br>
-<br>
-<a href="{% url 'off' book.title %}">Done</a>
+{%endfor%}
+
+<a href="{% url 'off' %}">Done</a>
 
 </body>
 </html>

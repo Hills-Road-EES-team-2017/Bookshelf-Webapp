@@ -1,0 +1,28 @@
+{% extends 'website/base.html' %}
+
+{% block title %}Your basket{% endblock %}
+
+{% block body %}
+<h1>Your basket:</h1>
+<body>
+{% if basket %}
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>State</th>
+        </tr>
+        {% for book in basket %}
+        <tr>
+            <td>{{ book.title }}</td>
+            <td>{{ book.author }}</td>
+            <td>{{book.get_book_state_display}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'map' %}">Checkout</a>
+{% else %}
+<p>You have no books in your basket!</p>
+{% endif %}
+</body>
+{% endblock %}
