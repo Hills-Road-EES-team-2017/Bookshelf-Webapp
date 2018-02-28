@@ -24,13 +24,38 @@ def remove_from_basket(request, id):
     customer.profile.basket = customer.profile.basket.replace((str(id)+','),'')
     customer.save()
 
-def find_partition(width):
-    # Gets all partitions ordered from lowest distance away
-    for partition in Partition.objects.all().order_by('user_distance'):
-        if partition.partition_space >= width:
-            return partition
-            break
+#def bool_find_partition(list_of_books):
+#    width = 0
+#    for book in list_of_books:
+#        width += book.book_width
+#    partition_list = []
+#    # Gets all partitions ordered from lowest distance away
+#    for partition in Partition.objects.all().order_by('user_distance'):
+#        if partition.partition_space >= width:
+#            return True
+#    return False
+#
 
+#def find_partition(list_of_books):
+#    if bool_find_partition(list_of_books):
+#        obj_find_partition(list_of_books)
+#    elif len(list_of_books) == 1:
+#        pass
+#    elif bool_find_partition(list_of_books[1:]) and bool_find_partition([0]):
+#
+
+#def obj_find_partition(list_of_books):
+#    width = 0
+#    for book in list_of_books:
+#        width += book.book_width
+#    partition_list = []
+#    # Gets all partitions ordered from lowest distance away
+#    for partition in Partition.objects.all().order_by('user_distance'):
+#        if partition.partition_space >= width:
+#            for i in range(len(list_of_books)):
+#                partition_list.append[partition]
+#    return partition_list
+#    partition_list = find_partition(list_of_books) +
 
 def strips(basket):  # Function from LED team
     basket = get_basket(basket)
@@ -131,6 +156,7 @@ def delete_basket(request, book_id):
 @login_required
 def map(request):
     user_basket = get_basket(request.user.profile.basket)
+#    found_partition =
     sections = []
     for book in user_basket:
         sections.append(book.partition.section.name)
@@ -177,26 +203,25 @@ def off(request):
             # All other books on partition
             further_books = Book.objects.filter(partition=book.partition)
             for other in further_books:
-                # Books on the partition further right than selected boo
+                # Books on the partition further right than selected book
                 if other.partition_depth>book.partition_depth:
                     # Moved to the left
-                    other.partition_depth -= book.partition_depth
+                    other.partition_depth -= book.book_width
                     other.save()
 
-            book.save()
-            partition.save()
         elif book.book_state == RETURNING:
             # Set to available
             book.book_state = AVAILABLE
             book.last_updated = datetime.now()
             partition.partition_space -= book.book_width
             further_books = Book.objects.filter(partition=book.partition)
+            # Sets partition depth to 0, then adds on book width of all other books on partition
             book.partition_depth = 0
             book.save()
             for other in further_books:
                 book.partition_depth += other.book_width
-            book.save()
-            partition.save()
+        book.save()
+        partition.save()
     customer = request.user
     customer.profile.basket = ''
     customer.save()
