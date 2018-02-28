@@ -112,6 +112,21 @@ def update_basket(request, book_id):
     book.save()
     return redirect('basket')
 
+def delete_basket(request, book_id):
+
+    AVAILABLE = 0
+    TAKING = 1
+    TAKEN = 2
+    RETURNING = 3
+    RESERVED = 4
+    basket = get_basket(request.user.profile.basket)
+    book = get_object_or_404(Book, pk=book_id)
+    if book in basket:
+        if book.book_state == RESERVED:
+            book.book_state = AVAILABLE
+            book.save()
+        remove_from_basket(request, book_id)
+    return redirect('basket')
 
 @login_required
 def map(request):
