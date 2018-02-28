@@ -12,10 +12,10 @@
 <options>
     <a href="{% url 'homepage' %}">Take out</a> |
     <a href="{% url 'taken' %}">Return</a> |
-     <a href="{% url 'direct' %}">Basket</a> |
+     <a href="{% url 'basket' %}">Basket</a> |
     Contact |
     Maps |
-    <user>{{current_user}}</user>: <a href="{% url 'login' %}">Logout</a>
+    <user>{{current_user}}</user>: <a href="{% url 'logout' %}">Logout</a>
 </options>
 <div id="content">{% block body %}{% endblock %}</div>
 </html>

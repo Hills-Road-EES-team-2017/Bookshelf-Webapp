@@ -1,5 +1,8 @@
 from django.db import models
 from datetime import datetime
+from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Book(models.Model):
 
@@ -27,7 +30,7 @@ class Book(models.Model):
     book_state = models.IntegerField(choices=states, default=0)
     book_width = models.IntegerField()
     partition_depth = models.IntegerField() #distance_from_partition
-    customer = models.ForeignKey('Customer', on_delete=models.SET(0), default=0)
+    customer = models.ForeignKey(User, on_delete=models.SET(0), default=0)
     last_updated = models.DateTimeField(auto_now=True)
     last_taken = models.DateTimeField(default=datetime.now)
     colour = models.CharField(max_length=1, choices=colours, default="R")
@@ -42,13 +45,18 @@ class Partition(models.Model):
     #def __str__(self):
     #    return self.AutoField
 
-class Customer(models.Model):
-    surname = models.CharField(max_length=30)
-    email = models.EmailField()
-    card_number = models.IntegerField()
-    password = models.CharField(max_length=20)
-    def __str__(self):
-        return self.surname
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    basket = models.CharField(max_length=16, blank=True)
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    instance.profile.save()
     
 class Section(models.Model):
     name = models.CharField(max_length=1)

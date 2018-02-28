@@ -1,7 +1,6 @@
 from django.contrib import admin
 
-from .models import Customer, Partition, Book
+from .models import Partition, Book
 
-admin.site.register(Customer)
 admin.site.register(Partition)
 admin.site.register(Book)

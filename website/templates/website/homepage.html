@@ -30,7 +30,7 @@
             {% if book.book_state == 0 %}
                 <td class="available">{{book.get_book_state_display}}</td>
             {% elif book.book_state == 1 or book.book_state == 3 %}
-                <td class="interim">{{book.get_book_state_display}}</td>
+                <td class="interim">{{book.get_book_state_display}}</td> {# print unavailable after testing #}
             {% elif book.book_state == 2 %}
                 <td class="taken">{{book.get_book_state_display}}</td>
             {% elif book.book_state == 4 %}

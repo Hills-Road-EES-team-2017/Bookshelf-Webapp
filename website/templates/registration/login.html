@@ -5,21 +5,15 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Map page</title>
+    <title></title>
 </head>
 
 <body>
-<h1>Map page</h1>
-
-{% for book, section in basket %}
-<h>{{book.title}}</h>
-Section: {{ section }}
-<br>
-colour: {{ book.get_colour_display }} <br>
-<br>
-{%endfor%}
-
-<a href="{% url 'leds' %}">Done</a>
-
+<h1>Login</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Login</button>
+</form>
 </body>
 </html>

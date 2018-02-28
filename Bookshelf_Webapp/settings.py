@@ -28,6 +28,9 @@ DEBUG = True
 ALLOWED_HOSTS = ["www.eeslibrary.com"]
 
 
+LOGIN_REDIRECT_URL = 'homepage'
+LOGIN_URL = 'login'
+
 # Application definition
 
 INSTALLED_APPS = [
