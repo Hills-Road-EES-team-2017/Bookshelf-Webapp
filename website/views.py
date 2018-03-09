@@ -4,6 +4,7 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from .models import Book,Profile, Partition
+from algorithms import find_partitions_for_returning_books
 
 
 def get_basket(basket):
@@ -24,44 +25,10 @@ def remove_from_basket(request, id):
     customer.profile.basket = customer.profile.basket.replace((str(id)+','),'')
     customer.save()
 
-#def bool_find_partition(list_of_books):
-#    width = 0
-#    for book in list_of_books:
-#        width += book.book_width
-#    partition_list = []
-#    # Gets all partitions ordered from lowest distance away
-#    for partition in Partition.objects.all().order_by('user_distance'):
-#        if partition.partition_space >= width:
-#            return True
-#    return False
-#
-
-#def find_partition(list_of_books):
-#    if bool_find_partition(list_of_books):
-#        obj_find_partition(list_of_books)
-#    elif len(list_of_books) == 1:
-#        pass
-#    elif bool_find_partition(list_of_books[1:]) and bool_find_partition([0]):
-#
-
-#def obj_find_partition(list_of_books):
-#    width = 0
-#    for book in list_of_books:
-#        width += book.book_width
-#    partition_list = []
-#    # Gets all partitions ordered from lowest distance away
-#    for partition in Partition.objects.all().order_by('user_distance'):
-#        if partition.partition_space >= width:
-#            for i in range(len(list_of_books)):
-#                partition_list.append[partition]
-#    return partition_list
-#    partition_list = find_partition(list_of_books) +
-
 def strips(basket):  # Function from LED team
     basket = get_basket(basket)
     for book in basket:
         print ("LEDS TURNED ON FOR BOOK", book.id)
-
 
 @login_required
 def select(request):
