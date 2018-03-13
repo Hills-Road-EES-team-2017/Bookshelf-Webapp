@@ -2,31 +2,33 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
 from datetime import datetime
 from django.contrib.auth.models import User
-from django.contrib.auth.decorators import login_required
-from .models import Book,Profile, Partition
-from algorithms import find_partitions_for_returning_books
+from django.contrib.auth.decorators import login_required, user_passes_test
+from .models import Book, Partition
+from .algorithms import find_partitions_for_returning_books
+from .forms import AddBookForm
+from django.http import HttpResponseRedirect
 
 
-def get_basket(basket):
-    # e.g. basket = '3,5,1,8,4,'
+def get_basket(user):
+    basket = Book.objects.filter(customer=user.id)
     obj_basket = []
-    for id in range(0,len(basket),2):
-        print (basket[id])
-        obj_basket.append(get_object_or_404(Book, pk=int(basket[id])))
+    for book in basket:
+        obj_basket.append(book)
     return obj_basket
 
-def add_to_basket(request, book_id):
-    customer = request.user
-    customer.profile.basket += str(book_id)+','
-    customer.save()
 
-def remove_from_basket(request, id):
-    customer = request.user
-    customer.profile.basket = customer.profile.basket.replace((str(id)+','),'')
-    customer.save()
+
+#def add_to_basket(request, book_id):
+#    customer = request.user
+#    customer.profile.basket += str(book_id)+','
+#    customer.save()
+
+#def remove_from_basket(request, id):
+#    customer = request.user
+#    customer.profile.basket = customer.profile.basket.replace((str(id)+','),'')
+#    customer.save()
 
 def strips(basket):  # Function from LED team
-    basket = get_basket(basket)
     for book in basket:
         print ("LEDS TURNED ON FOR BOOK", book.id)
 
@@ -49,6 +51,11 @@ def taken(request):
 def homepage(request):
     book_list = []
     search = ""
+    if is_master(request.user):
+        add_button = True
+    else:
+        add_button = False
+
     try:
         search = request.POST['search']
         # Retrieves list of all books containing search (default = "")
@@ -57,7 +64,7 @@ def homepage(request):
         print("error")
 
     # Displays homepage.html where book_list is the values from line above and states is the possible string states
-    return render(request, 'website/homepage.html', {'book_list': book_list, 'current_user': request.user.username, 'searched': search})
+    return render(request, 'website/homepage.html', {'book_list': book_list, 'current_user': request.user.username, 'searched': search, 'add_button': add_button})
 
 @login_required
 def detail(request, book_title):
@@ -73,7 +80,7 @@ def detail(request, book_title):
 
 @login_required
 def basket(request):
-    user_basket = get_basket(request.user.profile.basket)
+    user_basket = get_basket(request.user)
     return render(request, 'website/basket.html', {'basket': user_basket, 'current_user':request.user.username})
 
 @login_required
@@ -82,17 +89,17 @@ def update_basket(request, book_id):
 
     AVAILABLE = 0
     TAKEN = 2
-    RESERVED = 4
+    TAKING_BASKET = 5
+    RETURNING_BASKET = 6
 
     if book.book_state == AVAILABLE: # If taking book
         # Set to taking
-        book.book_state = RESERVED
+        book.book_state = TAKING_BASKET
         book.customer = request.user
-        add_to_basket(request, book.id)
 
     elif book.book_state == TAKEN and book.customer == request.user:
         if not str(book.id) in request.user.profile.basket:
-            add_to_basket(request, book.id)
+            book.book_state = RETURNING_BASKET
     else:
         return redirect('homepage')
 
@@ -104,6 +111,7 @@ def update_basket(request, book_id):
     book.save()
     return redirect('basket')
 
+@login_required
 def delete_basket(request, book_id):
 
     AVAILABLE = 0
@@ -111,25 +119,43 @@ def delete_basket(request, book_id):
     TAKEN = 2
     RETURNING = 3
     RESERVED = 4
-    basket = get_basket(request.user.profile.basket)
+    TAKING_BASKET = 5
+    RETURNING_BASKET = 6
+
+    basket = get_basket(request.user)
     book = get_object_or_404(Book, pk=book_id)
     if book in basket:
-        if book.book_state == RESERVED:
+        if book.book_state == TAKING_BASKET:
             book.book_state = AVAILABLE
-            book.save()
-        remove_from_basket(request, book_id)
+        elif book.book_state == RETURNING_BASKET:
+            book.book_State = TAKEN
+        book.save()
     return redirect('basket')
 
 @login_required
 def map(request):
-    user_basket = get_basket(request.user.profile.basket)
-#    found_partition =
-    sections = []
+    user_basket = get_basket(request.user)
+    returning_basket = []
     for book in user_basket:
+        if book.book_state == 6:
+            returning_basket.append(book)
+    #found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
+    found_partitions = []
+    #TEMPORARY FIXXXXX
+    for x in range(len(returning_basket)):
+        found_partitions.append(Partition.objects.all()[0])
+    #ENDTEMP FIXXXXX
+    sections = []
+    index = 0
+    for book in user_basket:
+        if book.book_state == 6:
+            book.partition = found_partitions[index]
+            book.save()
+            index += 1
         sections.append(book.partition.section.name)
     zipped_books = zip(user_basket, sections)
     return render(request, 'website/maps.html', {'basket': zipped_books})
-
+@login_required
 def leds(request):
 
     AVAILABLE = 0
@@ -137,17 +163,19 @@ def leds(request):
     TAKEN = 2
     RETURNING = 3
     RESERVED = 4
+    TAKING_BASKET = 5
+    RETURNING_BASKET = 6
 
-    basket = get_basket(request.user.profile.basket)
+    basket = get_basket(request.user)
     for book in basket:
-        if book.book_state == RESERVED:
+        if book.book_state == TAKING_BASKET:
             book.book_state = TAKING
             book.last_updated = datetime.now()
-        elif book.book_state == TAKEN:
+        elif book.book_state == RETURNING_BASKET:
             book.book_state = RETURNING
             book.last_updated = datetime.now()
         book.save()
-    strips(request.user.profile.basket)
+    strips(get_basket(request.user))
     return redirect('off')
 
 @login_required
@@ -157,7 +185,9 @@ def off(request):
     TAKEN = 2
     RETURNING = 3
     RESERVED = 4
-    user_basket = get_basket(request.user.profile.basket)
+    TAKING_BASKET = 5
+    RETURNING_BASKET = 6
+    user_basket = get_basket(request.user)
     for book in user_basket:
         partition = get_object_or_404(Partition, pk=book.partition.id)
         if book.book_state == TAKING:
@@ -194,3 +224,34 @@ def off(request):
     customer.save()
 
     return render(request, 'website/off.html')
+
+def is_master(user):
+    if user.username == 'master' and user.is_superuser:
+        return True
+    else:
+        return False
+
+@user_passes_test(is_master)
+def delete_books_in_basket(request, basket):
+    for book in basket:
+        if book.book_state == 2:
+            book.delete()
+
+@user_passes_test(is_master)
+def add_book(request):
+    if request.method == 'POST':
+        form = AddBookForm(request.POST)
+        # check whether it's valid:
+        if form.is_valid():
+            new_title = form.cleaned_data['new_title']
+            new_author = form.cleaned_data['new_author']
+            new_width = form.cleaned_data['new_width']
+            new_book = Book(title=new_title, author=new_author, partition=Partition.objects.all()[0], book_state=2, book_width=new_width, partition_depth=0, customer=request.user, last_taken=datetime.now(), colour='R')
+            new_book.save()
+            return redirect('homepage')
+        else:
+            return render(request, 'website/add.html', {'form': form})
+    else:
+        form = AddBookForm()
+
+    return render(request, 'website/add.html', {'form': form})

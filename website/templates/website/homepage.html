@@ -6,6 +6,10 @@
 <body>
 <h1>Welcome to the homepage</h1>
 
+{% if add_button %}
+<a href="{% url 'add_book' %}">Add new book</a>
+{% endif %}
+
 <form action="{% url 'homepage' %}" method="post">
 {% csrf_token %}
     <p><searchbar>Search for a title or author:</searchbar>

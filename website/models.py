@@ -11,7 +11,9 @@ class Book(models.Model):
         (1,'taking'),
         (2,'taken'),
         (3,'returning'),
-        (4,'reserved')
+        (4,'reserved'),
+        (5, 'taking basket'),
+        (6, 'returning basket')
     )
 
     colours = (
@@ -45,19 +47,6 @@ class Partition(models.Model):
     #def __str__(self):
     #    return self.AutoField
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    basket = models.CharField(max_length=16, blank=True)
-
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        Profile.objects.create(user=instance)
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    instance.profile.save()
-    
 class Section(models.Model):
     name = models.CharField(max_length=1)
     def __str__(self):
