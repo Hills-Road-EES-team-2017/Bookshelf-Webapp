@@ -10,23 +10,19 @@ from django.http import HttpResponseRedirect
 
 
 def get_basket(user):
-    basket = Book.objects.filter(customer=user.id)
-    obj_basket = []
+    basket = Book.objects.filter(customer=user.id, book_state=5)|Book.objects.filter(customer=user.id, book_state=6)
+    list_basket = []
     for book in basket:
-        obj_basket.append(book)
-    return obj_basket
+        list_basket.append(book)
+    return list_basket
 
+def get_returning_books(user):
+    returning_books = Book.objects.filter(customer=user.id, book_state=1)|Book.objects.filter(customer=user.id,book_state=3)
+    list_basket = []
+    for book in returning_books:
+        list_basket.append(book)
+    return list_basket
 
-
-#def add_to_basket(request, book_id):
-#    customer = request.user
-#    customer.profile.basket += str(book_id)+','
-#    customer.save()
-
-#def remove_from_basket(request, id):
-#    customer = request.user
-#    customer.profile.basket = customer.profile.basket.replace((str(id)+','),'')
-#    customer.save()
 
 def strips(basket):  # Function from LED team
     for book in basket:
@@ -51,10 +47,7 @@ def taken(request):
 def homepage(request):
     book_list = []
     search = ""
-    if is_master(request.user):
-        add_button = True
-    else:
-        add_button = False
+    add_button = is_master(request.user)
 
     try:
         search = request.POST['search']
@@ -76,7 +69,8 @@ def detail(request, book_title):
         taking = 1
     else:
         taking = 2
-    return render(request, 'website/detail.html', {'book': book, 'current_user': request.user.username, 'taking': taking})
+    master = is_master(request.user)
+    return render(request, 'website/detail.html', {'book': book, 'current_user': request.user.username, 'taking': taking, 'master': master})
 
 @login_required
 def basket(request):
@@ -86,7 +80,7 @@ def basket(request):
 @login_required
 def update_basket(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
-
+    basket = get_basket(request.user)
     AVAILABLE = 0
     TAKEN = 2
     TAKING_BASKET = 5
@@ -98,8 +92,7 @@ def update_basket(request, book_id):
         book.customer = request.user
 
     elif book.book_state == TAKEN and book.customer == request.user:
-        if not str(book.id) in request.user.profile.basket:
-            book.book_state = RETURNING_BASKET
+        book.book_state = RETURNING_BASKET
     else:
         return redirect('homepage')
 
@@ -187,7 +180,7 @@ def off(request):
     RESERVED = 4
     TAKING_BASKET = 5
     RETURNING_BASKET = 6
-    user_basket = get_basket(request.user)
+    user_basket = get_returning_books(request.user)
     for book in user_basket:
         partition = get_object_or_404(Partition, pk=book.partition.id)
         if book.book_state == TAKING:
@@ -220,7 +213,6 @@ def off(request):
         book.save()
         partition.save()
     customer = request.user
-    customer.profile.basket = ''
     customer.save()
 
     return render(request, 'website/off.html')
@@ -232,10 +224,11 @@ def is_master(user):
         return False
 
 @user_passes_test(is_master)
-def delete_books_in_basket(request, basket):
-    for book in basket:
-        if book.book_state == 2:
-            book.delete()
+def delete_book(request, book_id):
+    book = Book.objects.get(pk=book_id)
+    if book.book_state == 2:
+        book.delete()
+    return redirect('homepage')
 
 @user_passes_test(is_master)
 def add_book(request):

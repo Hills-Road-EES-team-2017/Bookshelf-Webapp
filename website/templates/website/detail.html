@@ -9,6 +9,11 @@
     <a href="{% url 'update_basket' book_id=book.id %}">Take book</a>
     {% elif taking == 1%}
     <a href="{% url 'update_basket' book_id=book.id %}">Return book</a>
+        {% if master %}
+        <br>
+        <br>
+        <a href="{% url 'delete_book' book_id=book.id%}">Delete book</a>
+        {% endif %}
     {% else %}
     Book unavailable
     {% endif %}

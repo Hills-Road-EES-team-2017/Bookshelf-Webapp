@@ -12,8 +12,8 @@ urlpatterns = [
     url(r'^login/$', auth_views.login, name='login'),
     url(r'^logout/$', auth_views.logout, {'next_page': '/'}, name='logout'),
 
+    url(r'^delete_book(?P<book_id>[\w-]+)', views.delete_book, name="delete_book"),
     path('add_book/', views.add_book, name='add_book'),
-    path('delete_book/', views.delete_books_in_basket, name='delete_book'),
     path('off/', views.off, name='off'),
     path('select/', views.select, name='select'),
     path('taken/', views.taken, name='taken'),
