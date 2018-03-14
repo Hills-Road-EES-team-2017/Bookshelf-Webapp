@@ -3,12 +3,12 @@ import algorithms
 
 class Fake_book:
     def __init__(self, width):
-        self.width = width
+        self.book_width = width
 
 class Fake_partition:
     def __init__(self, space=0, distance=0):
-        self.space = space
-        self.distance = distance
+        self.partition_space = space
+        self.user_distance = distance
 
 
 class TestFind_partition_for_returning_book(unittest.TestCase):

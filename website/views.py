@@ -6,37 +6,35 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
-from django.http import HttpResponseRedirect
 
 
-def get_basket(user):
+def get_basket(user): # Retrieves list of books in the user's basket
     basket = Book.objects.filter(customer=user.id, book_state=5)|Book.objects.filter(customer=user.id, book_state=6)
     list_basket = []
-    for book in basket:
+    for book in basket: # Creates a python list rather than a django queryset
         list_basket.append(book)
     return list_basket
 
-def get_returning_books(user):
+
+def get_returning_books(user): # Gets a list of books that were in the user's basket before checkout
     returning_books = Book.objects.filter(customer=user.id, book_state=1)|Book.objects.filter(customer=user.id,book_state=3)
     list_basket = []
-    for book in returning_books:
+    for book in returning_books: # Creates python list rather than a django queryset
         list_basket.append(book)
     return list_basket
 
 
-def strips(basket):  # Function from LED team
-    for book in basket:
-        print ("LEDS TURNED ON FOR BOOK", book.id)
+def strips(input): # Function from LED team
+    pass
+
+
+def prep_strips(basket):  # Formulates appropriate input for strips function
+    input = 0
+    strips(input)
+
 
 @login_required
-def select(request):
-    return render(request, 'website/select.html')
-
-
-@login_required
-def taken(request):
-
-    # User is returing books
+def taken(request): # View for list of user's taken books
     customer = request.user
     # Retrieves book list of customers books where state is taken
     book_list = Book.objects.filter(customer=customer.id, book_state=2)
@@ -44,43 +42,42 @@ def taken(request):
 
 
 @login_required
-def homepage(request):
+def homepage(request): # View for list of all books in library
     book_list = []
     search = ""
-    add_button = is_master(request.user)
+    add_button = is_master(request.user) # For adding the 'add book' button if on certain account
 
-    try:
+    try: # Inital load of page will yield error, as there is no post request
         search = request.POST['search']
         # Retrieves list of all books containing search (default = "")
         book_list = Book.objects.filter(title__icontains=search) | Book.objects.filter(author__icontains=search)
     except:
-        print("error")
+        pass
 
     # Displays homepage.html where book_list is the values from line above and states is the possible string states
     return render(request, 'website/homepage.html', {'book_list': book_list, 'current_user': request.user.username, 'searched': search, 'add_button': add_button})
 
 @login_required
-def detail(request, book_title):
-    # Retrieves book where pk is the id passed into it
+def detail(request, book_title): # View for details of each book individually
+    # Retrieves book based on title
     book = get_object_or_404(Book, title=book_title)
-    if book.book_state == 0:
-        taking = 0
-    elif book.book_state == 2 and book.customer == request.user:
+    if book.book_state == 0: # If available
+        taking = 0 # Context variable for HMTL
+    elif book.book_state == 2 and book.customer == request.user: #Only if book is taken by user logged in
         taking = 1
     else:
         taking = 2
-    master = is_master(request.user)
+    master = is_master(request.user) # For adding 'delete book' button if on certain account
     return render(request, 'website/detail.html', {'book': book, 'current_user': request.user.username, 'taking': taking, 'master': master})
 
 @login_required
-def basket(request):
+def basket(request): # View for displaying user's basket
     user_basket = get_basket(request.user)
     return render(request, 'website/basket.html', {'basket': user_basket, 'current_user':request.user.username})
 
 @login_required
-def update_basket(request, book_id):
+def update_basket(request, book_id): # Non-user view for updating the record of a book being added to basket
     book = get_object_or_404(Book, pk=book_id)
-    basket = get_basket(request.user)
     AVAILABLE = 0
     TAKEN = 2
     TAKING_BASKET = 5
@@ -97,21 +94,19 @@ def update_basket(request, book_id):
         return redirect('homepage')
 
     colours = ["Red","Yellow", "Green", "Cyan", "Blue", "Magenta", "White"]
-    for book_colour in (Book.objects.filter(partition=book.partition, book_state=1)|Book.objects.filter(partition=book.partition, book_state = 3)):
+    # Cycles through list of colours and removes any which are already in use
+    for book_colour in (Book.objects.filter(section=book.partition.section, book_state=1)|Book.objects.filter(section=book.partition.section, book_state = 3)):
         if book_colour.colour in colours:
             colours.remove(book_colour.colour)
-    book.colour = colours[0]
+    book.colour = colours[0] # Assigns first non-taken colour to book
     book.save()
     return redirect('basket')
 
 @login_required
-def delete_basket(request, book_id):
+def delete_basket(request, book_id): # Non-user view for deleting a book from the basket
 
     AVAILABLE = 0
-    TAKING = 1
     TAKEN = 2
-    RETURNING = 3
-    RESERVED = 4
     TAKING_BASKET = 5
     RETURNING_BASKET = 6
 
@@ -126,40 +121,36 @@ def delete_basket(request, book_id):
     return redirect('basket')
 
 @login_required
-def map(request):
+def map(request): # View for displaying details of position about books
     user_basket = get_basket(request.user)
     returning_basket = []
+    # Isolates books that are being returned
     for book in user_basket:
         if book.book_state == 6:
             returning_basket.append(book)
-    #found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
-    found_partitions = []
-    #TEMPORARY FIXXXXX
-    for x in range(len(returning_basket)):
-        found_partitions.append(Partition.objects.all()[0])
-    #ENDTEMP FIXXXXX
+    found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
     sections = []
     index = 0
     for book in user_basket:
-        if book.book_state == 6:
+        # Assigns a new partition to books being returned
+        if book in returning_basket:
             book.partition = found_partitions[index]
             book.save()
             index += 1
+        # Adds section of all books to the list of sections for HMTL
         sections.append(book.partition.section.name)
     zipped_books = zip(user_basket, sections)
     return render(request, 'website/maps.html', {'basket': zipped_books})
 @login_required
-def leds(request):
+def leds(request): # Non-user view for turning on LEDs and updating the states of books
 
-    AVAILABLE = 0
     TAKING = 1
-    TAKEN = 2
     RETURNING = 3
-    RESERVED = 4
     TAKING_BASKET = 5
     RETURNING_BASKET = 6
 
     basket = get_basket(request.user)
+    # Updates relevent fields of books being taken/returned
     for book in basket:
         if book.book_state == TAKING_BASKET:
             book.book_state = TAKING
@@ -168,18 +159,16 @@ def leds(request):
             book.book_state = RETURNING
             book.last_updated = datetime.now()
         book.save()
-    strips(get_basket(request.user))
+    #Turns on LEDs
+    prep_strips(get_returning_books(request.user))
     return redirect('off')
 
 @login_required
-def off(request):
+def off(request): # Placeholder view to simulate pressing of button, with changes of states included
     AVAILABLE = 0
     TAKING = 1
     TAKEN = 2
     RETURNING = 3
-    RESERVED = 4
-    TAKING_BASKET = 5
-    RETURNING_BASKET = 6
     user_basket = get_returning_books(request.user)
     for book in user_basket:
         partition = get_object_or_404(Partition, pk=book.partition.id)
@@ -217,21 +206,21 @@ def off(request):
 
     return render(request, 'website/off.html')
 
-def is_master(user):
+def is_master(user): # Function to determine if the 'master' superuser is logged in
     if user.username == 'master' and user.is_superuser:
         return True
     else:
         return False
 
 @user_passes_test(is_master)
-def delete_book(request, book_id):
+def delete_book(request, book_id): # Non-user view which deletes book from database
     book = Book.objects.get(pk=book_id)
     if book.book_state == 2:
         book.delete()
     return redirect('homepage')
 
 @user_passes_test(is_master)
-def add_book(request):
+def add_book(request): # Master-only view which allows new book to be created
     if request.method == 'POST':
         form = AddBookForm(request.POST)
         # check whether it's valid:
