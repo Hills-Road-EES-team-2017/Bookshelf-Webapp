@@ -6,7 +6,28 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
+from .LED_functions import initialise, send_32bits, LED_function
+import RPi.GPIO as GPIO
+import time
+import spidev
 
+spi = spidev.SpiDev()
+spi.open(0,1)
+spi.max_speed_hz = 1000000
+spi.bits_per_word = 8
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(16,GPIO.IN)
+GPIO.setup(18,GPIO.IN)
+GPIO.setup(22,GPIO.IN)
+GPIO.setwarnings(False)
+
+speed = 0.0000025
+number_of_LEDs = 60
+number_of_strips = 10
+LEDs = [ [int]*number_of_LEDs, ]*number_of_strips
+
+initialise()
 
 def get_basket(user): # Retrieves list of books in the user's basket
     basket = Book.objects.filter(customer=user.id, book_state=5)|Book.objects.filter(customer=user.id, book_state=6)
@@ -24,14 +45,19 @@ def get_returning_books(user): # Gets a list of books that were in the user's ba
     return list_basket
 
 
-def strips(input): # Function from LED team
-    pass
+def LED_on(book):  # Formulates appropriate input for strips function
+    partition = Partition.objects.get(pk=book.partition.id)
+    shelf = partition.id
+    distance = partition.shelf_distance + book.partition_depth + int(book.book_width/2)
+    colour = book.colour
+    LED_function(shelf, distance, colour)
 
-
-def prep_strips(basket):  # Formulates appropriate input for strips function
-    input = 0
-    strips(input)
-
+def LED_off(book):
+    partition = Partition.objects.get(pk=book.partition.id)
+    shelf = partition.id
+    distance = partition.shelf_distance + book.partition_depth + int(book.book_width/2)
+    colour = "O"
+    LED_function(shelf, distance, colour)
 
 @login_required
 def taken(request): # View for list of user's taken books
@@ -164,8 +190,8 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
             book.book_state = RETURNING
             book.last_updated = datetime.now()
         book.save()
-    #Turns on LEDs
-    prep_strips(get_returning_books(request.user))
+        #Turns on LEDs
+        LED_on(book)
     return redirect('off')
 
 @login_required
@@ -210,9 +236,8 @@ def leds_off(request): # Placeholder view to simulate pressing of button, with c
                 book.partition_depth += other.book_width
         book.save()
         partition.save()
-    customer = request.user
-    customer.save()
-
+        LED_off(book)
+        
     return redirect('homepage')
 
 def is_master(user): # Function to determine if the 'master' superuser is logged in
