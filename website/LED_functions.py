@@ -50,7 +50,7 @@ def LED_function(shelf, distance, colour):
     #API LEDs
     #update array
     colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-    LEDposition = int (distance/27)
+    LEDposition = int (distance/16.5)
     # Assigns colour to required LED
     LEDs[shelf][LEDposition] = colourDict[colour]
     #light LED Strip
