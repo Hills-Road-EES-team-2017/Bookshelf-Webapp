@@ -7,27 +7,32 @@ from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
 from .LED_functions import initialise, send_32bits, LED_function
-#import RPi.GPIO as GPIO
-#import time
-#import spidev
+import RPi.GPIO as GPIO
+import time
+import spidev
 
-#spi = spidev.SpiDev()
-#spi.open(0,1)
-#spi.max_speed_hz = 1000000
-#spi.bits_per_word = 8
-#GPIO.setmode(GPIO.BOARD)
-#GPIO.setup(11, GPIO.OUT)
-#GPIO.setup(16,GPIO.IN)
-#GPIO.setup(18,GPIO.IN)
-#GPIO.setup(22,GPIO.IN)
-#GPIO.setwarnings(False)
+class Ghost_partition:
+    def __init__(self, level=0):
+        self.book_level = level
+
+
+spi = spidev.SpiDev()
+spi.open(0,1)
+spi.max_speed_hz = 1000000
+spi.bits_per_word = 8
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(16,GPIO.IN)
+GPIO.setup(18,GPIO.IN)
+GPIO.setup(22,GPIO.IN)
+GPIO.setwarnings(False)
 
 speed = 0.0000025
 number_of_LEDs = 60
 number_of_strips = 10
 LEDs = [ [int]*number_of_LEDs, ]*number_of_strips
 
-#initialise()
+initialise()
 
 def show_book_order(partition): # For testing return mechanism
     books = Book.objects.filter(partition=partition.id)
@@ -151,6 +156,8 @@ def delete_basket(request, book_id): # Non-user view for deleting a book from th
 
 @login_required
 def map(request): # View for displaying details of position about books
+    ghost_partitions = []
+    
     user_basket = get_basket(request.user)
     returning_basket = []
     # Isolates books that are being returned
@@ -158,12 +165,25 @@ def map(request): # View for displaying details of position about books
         if book.book_state == 6:
             returning_basket.append(book)
     found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
+
+
+    for each_part in found_partitions:
+        ghost_partitions.append(Ghost_partition(level=0))
+        books = Book.objects.filter(partition=each_part)
+        for other in books:
+            if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
+                ghost_partitions[-1].book_level += other.book_width
+
+
+
     sections = []
     index = 0
     for book in user_basket:
         # Assigns a new partition to books being returned
         if book in returning_basket:
             book.partition = found_partitions[index]
+            book.partition_depth = ghost_partitions[user_basket.index(book)].book_level
+            ghost_partitions[user_basket.index(book)].book_level += book.book_width
             book.save()
             index += 1
         # Adds section of all books to the list of sections for HMTL
@@ -202,6 +222,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         book.save()
         #Turns on LEDs
         LED_on(book)
+    show_book_order(Partition.objects.get(pk=1))
     return redirect('off')
 
 @login_required
@@ -249,6 +270,7 @@ def leds_off(request): # Placeholder view to simulate pressing of button, with c
         book.save()
         partition.save()
         LED_off(book)
+
         
     return redirect('homepage')
 
@@ -274,7 +296,7 @@ def add_book(request): # Master-only view which allows new book to be created
             new_title = form.cleaned_data['new_title']
             new_author = form.cleaned_data['new_author']
             new_width = form.cleaned_data['new_width']
-            new_book = Book(title=new_title, author=new_author, partition=Partition.objects.all()[0], book_state=2, book_width=new_width, partition_depth=0, customer=request.user, last_taken=datetime.now(), colour='R')
+            new_book = Book(title=new_title, author=new_author, partition=Partition.objects.all()[0], book_state=2, book_width=new_width, partition_depth=100, customer=request.user, last_taken=datetime.now(), colour='R')
             new_book.save()
             return redirect('homepage')
         else:
