@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^delete_book(?P<book_id>[\w-]+)', views.delete_book, name="delete_book"),
     path('add_book/', views.add_book, name='add_book'),
     path('off/', views.off, name='off'),
+    path('leds_off/', views.leds_off, name='leds_off'),
     path('taken/', views.taken, name='taken'),
     path('', views.homepage, name='homepage'),
     path('basket/', views.basket, name='basket'),

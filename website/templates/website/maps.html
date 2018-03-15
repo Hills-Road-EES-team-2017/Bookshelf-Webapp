@@ -12,7 +12,8 @@
 <h1>Map page</h1>
 
 {% for book, section in basket %}
-<h>{{book.title}}</h>
+<strong>{{book.title}}</strong>
+<br>
 Section: {{ section }}
 <br>
 colour: {{ book.get_colour_display }} <br>

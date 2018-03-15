@@ -92,13 +92,6 @@ def update_basket(request, book_id): # Non-user view for updating the record of 
         book.book_state = RETURNING_BASKET
     else:
         return redirect('homepage')
-
-    colours = ["Red","Yellow", "Green", "Cyan", "Blue", "Magenta", "White"]
-    # Cycles through list of colours and removes any which are already in use
-    for book_colour in (Book.objects.filter(section=book.partition.section, book_state=1)|Book.objects.filter(section=book.partition.section, book_state = 3)):
-        if book_colour.colour in colours:
-            colours.remove(book_colour.colour)
-    book.colour = colours[0] # Assigns first non-taken colour to book
     book.save()
     return redirect('basket')
 
@@ -139,6 +132,18 @@ def map(request): # View for displaying details of position about books
             index += 1
         # Adds section of all books to the list of sections for HMTL
         sections.append(book.partition.section.name)
+
+    colours = ["R", "Y", "G", "C", "B", "M", "W"]
+    led_books = Book.objects.filter(partition__section=book.partition.section).exclude(pk=book.id) # Books in same section
+    led_books = led_books.filter(book_state=1)|led_books.filter(book_state=3) # Books with colours in use and same section
+    for basket_book in user_basket:
+        for live_book in led_books:
+            if live_book.colour in colours:
+                colours.remove(live_book.colour)
+        basket_book.colour = colours[0]
+        basket_book.save()
+        colours.remove(colours[0])
+
     zipped_books = zip(user_basket, sections)
     return render(request, 'website/maps.html', {'basket': zipped_books})
 @login_required
@@ -164,7 +169,11 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
     return redirect('off')
 
 @login_required
-def off(request): # Placeholder view to simulate pressing of button, with changes of states included
+def off(request):
+    return render(request, 'website/off.html')
+
+@login_required
+def leds_off(request): # Placeholder view to simulate pressing of button, with changes of states included
     AVAILABLE = 0
     TAKING = 1
     TAKEN = 2
@@ -204,7 +213,7 @@ def off(request): # Placeholder view to simulate pressing of button, with change
     customer = request.user
     customer.save()
 
-    return render(request, 'website/off.html')
+    return redirect('homepage')
 
 def is_master(user): # Function to determine if the 'master' superuser is logged in
     if user.username == 'master' and user.is_superuser:

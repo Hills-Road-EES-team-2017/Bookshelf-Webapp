@@ -33,12 +33,12 @@
             <td>{{ book.author }}</td>
             {% if book.book_state == 0 %}
                 <td class="available">{{book.get_book_state_display}}</td>
-            {% elif book.book_state == 1 or book.book_state == 3 %}
-                <td class="interim">{{book.get_book_state_display}}</td> {# print unavailable after testing #}
             {% elif book.book_state == 2 %}
                 <td class="taken">{{book.get_book_state_display}}</td>
             {% elif book.book_state == 4 %}
                 <td class="reserved">{{book.get_book_state_display}}</td>
+            {% else %}
+                <td class="interim">unavailable</td>
             {% endif %}
         </tr>
         {% endfor %}
