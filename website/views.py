@@ -8,6 +8,14 @@ from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
 
 
+def show_book_order(partition): # For testing return mechanism
+    books = Book.objects.filter(partition=partition.id)
+    ordered_books = sorted(books, key=lambda p: p.partition_depth, reverse=False)
+    for book in ordered_books:
+        print(book.title,book.book_width,book.partition_depth)
+    print()
+
+
 def get_basket(user): # Retrieves list of books in the user's basket
     basket = Book.objects.filter(customer=user.id, book_state=5)|Book.objects.filter(customer=user.id, book_state=6)
     list_basket = []
@@ -46,6 +54,8 @@ def homepage(request): # View for list of all books in library
     book_list = []
     search = ""
     add_button = is_master(request.user) # For adding the 'add book' button if on certain account
+
+    ## show_book_order(Partition.objects.get(pk=11))
 
     try: # Inital load of page will yield error, as there is no post request
         search = request.POST['search']
@@ -189,10 +199,10 @@ def leds_off(request): # Placeholder view to simulate pressing of button, with c
             # Space on the partition increased
             partition.partition_space += book.book_width
             # All other books on partition
-            further_books = Book.objects.filter(partition=book.partition)
+            further_books = Book.objects.filter(partition=book.partition).exclude(pk=book.id)
             for other in further_books:
                 # Books on the partition further right than selected book
-                if other.partition_depth>book.partition_depth:
+                if other.partition_depth > book.partition_depth:
                     # Moved to the left
                     other.partition_depth -= book.book_width
                     other.save()
@@ -202,12 +212,14 @@ def leds_off(request): # Placeholder view to simulate pressing of button, with c
             book.book_state = AVAILABLE
             book.last_updated = datetime.now()
             partition.partition_space -= book.book_width
-            further_books = Book.objects.filter(partition=book.partition)
+            further_books = Book.objects.filter(partition=book.partition).exclude(pk=book.id)
             # Sets partition depth to 0, then adds on book width of all other books on partition
             book.partition_depth = 0
             book.save()
             for other in further_books:
-                book.partition_depth += other.book_width
+                if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
+                    print(other.title, other.book_state)
+                    book.partition_depth += other.book_width
         book.save()
         partition.save()
     customer = request.user
