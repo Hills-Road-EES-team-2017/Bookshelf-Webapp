@@ -7,27 +7,27 @@ from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
 from .LED_functions import initialise, send_32bits, LED_function
-import RPi.GPIO as GPIO
-import time
-import spidev
+#import RPi.GPIO as GPIO
+#import time
+#import spidev
 
-spi = spidev.SpiDev()
-spi.open(0,1)
-spi.max_speed_hz = 1000000
-spi.bits_per_word = 8
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(11, GPIO.OUT)
-GPIO.setup(16,GPIO.IN)
-GPIO.setup(18,GPIO.IN)
-GPIO.setup(22,GPIO.IN)
-GPIO.setwarnings(False)
+#spi = spidev.SpiDev()
+#spi.open(0,1)
+#spi.max_speed_hz = 1000000
+#spi.bits_per_word = 8
+#GPIO.setmode(GPIO.BOARD)
+#GPIO.setup(11, GPIO.OUT)
+#GPIO.setup(16,GPIO.IN)
+#GPIO.setup(18,GPIO.IN)
+#GPIO.setup(22,GPIO.IN)
+#GPIO.setwarnings(False)
 
 speed = 0.0000025
 number_of_LEDs = 60
 number_of_strips = 10
 LEDs = [ [int]*number_of_LEDs, ]*number_of_strips
 
-initialise()
+#initialise()
 
 def show_book_order(partition): # For testing return mechanism
     books = Book.objects.filter(partition=partition.id)
