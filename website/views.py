@@ -43,7 +43,7 @@ def LED_function(shelf,distance,colour):
 speed = 0.0000025
 number_of_LEDs = 60
 number_of_strips = 10
-LEDs = [ [int]*number_of_LEDs, ]*number_of_strips
+LEDs = [ [3758096384]*number_of_LEDs, ]*number_of_strips
 
 initialise()
 
@@ -82,6 +82,15 @@ def LED_on(book):  # Formulates appropriate input for strips function
     shelf = shelf_number.index(partition)
     distance = partition.shelf_distance + book.partition_depth + int(book.book_width/2)
     colour = book.colour
+    LED = int(distance/16)
+    for i in range(int(len(LEDs[0])/2)):
+        if LEDs[shelf][LED+i] == 3758096384:
+            distance += 16*i
+            break
+        elif LEDs[shelf][LED-i] == 3758096384:
+            distance -= 16*i
+            break
+
     LED_function(shelf, distance, colour)
 
 def LED_off(book):
