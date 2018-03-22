@@ -6,45 +6,28 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
-#from .LED_functions import initialise, send_32bits, LED_function
-#import RPi.GPIO as GPIO
-#import time
-#import spidev
+from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 
 
-def initialise():
-    pass
 
-def LED_function(shelf,distance,colour):
-    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-    LED = int(distance/16)
-    LEDs[shelf][LED] = colourDict[colour]
-    print(LED)
-    print()
+#def initialise():
+#    pass
+
+#def LED_function(shelf,distance,colour):
+#    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
+#    LED = int(distance/16)
+#    LEDs[shelf][LED] = colourDict[colour]
+#    print(LED)
+#    print()
 
 
-#spi = spidev.SpiDev()
-#spi.open(0,1)
-#spi.max_speed_hz = 1000000
-#spi.bits_per_word = 8
-#GPIO.setmode(GPIO.BOARD)
-#GPIO.setup(11, GPIO.OUT)
-#GPIO.setup(16,GPIO.IN)
-#GPIO.setup(18,GPIO.IN)
-#GPIO.setup(22,GPIO.IN)
-#GPIO.setwarnings(False)
-
-speed = 0.0000025
-number_of_LEDs = 60
-number_of_strips = 10
-LEDs = [ [3758096384]*number_of_LEDs, ]*number_of_strips
 
 initialise()
 
 
 
 def show_book_order(partition): # For testing return mechanism
-    books = Book.objects.filter(partition=partition.id)
+    books = Book.objects.filter(partition=partition.id).exclude(book_state=2)
     ordered_books = sorted(books, key=lambda p: p.partition_depth, reverse=False)
     for book in ordered_books:
         print(book.title,book.book_width,book.partition_depth)
@@ -68,7 +51,7 @@ def get_returning_books(user): # Gets a list of books that were in the user's ba
 
 
 def LED_on(book):  # Formulates appropriate input for strips function
-    partitions = Partition.objects.all()
+    partitions = Partition.objects.all() # To return shelf number not partition id
     shelf_number = []
     for partition in partitions:
         shelf_number.append(partition)
@@ -76,29 +59,17 @@ def LED_on(book):  # Formulates appropriate input for strips function
     shelf = shelf_number.index(partition)
     distance = partition.shelf_distance + book.partition_depth + int(book.book_width/2)
     colour = book.colour
-    LED = int(distance/16)
-    for i in range(int(len(LEDs[0])/2)):
-        if LEDs[shelf][LED+i] == 3758096384:
-            distance += 16*i
-            break
-        elif LEDs[shelf][LED-i] == 3758096384:
-            distance -= 16*i
-            break
     LED_function(shelf, distance, colour)
 
 def LED_off(book):
-    partitions = Partition.objects.all()
+    partitions = Partition.objects.all() # To return shelf number not partition id
     shelf_number = []
     for partition in partitions:
         shelf_number.append(partition)
-    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
     partition = Partition.objects.get(pk=book.partition.id)
     shelf = shelf_number.index(partition)
-
-    distance = (LEDs[shelf].index(colourDict[book.colour]))*16
-    colour = "O"
-    LED_function(shelf, distance, colour)
-
+    colour = book.colour
+    LED_colour_off(shelf, colour)
 
 
 @login_required
@@ -201,13 +172,12 @@ def map(request): # View for displaying details of position about books
         # Assigns a new partition to books being returned
         if book in returning_basket:
             book.partition = found_partitions[i]
-            partition_books = Book.objects.filter(partition=found_partitions[i])
+            partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id)
             partition_books = sorted(partition_books, key=lambda p: p.partition_depth, reverse=True)
-            book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
-            book.save()
-            for found_partition in found_partitions:
-                if found_partition == book.partition:
-                    book.partition_depth += user_basket[found_partitions.index(found_partition)].book_width
+            if partition_books == []:
+                book.partition_depth = 0
+            else:
+                book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
             book.save()
             i+= 1
         # Adds section of all books to the list of sections for HMTL
@@ -246,6 +216,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         book.save()
         #Turns on LEDs
         LED_on(book)
+        
     show_book_order(Partition.objects.get(pk=basket[0].partition.id))
     return redirect('off')
 
@@ -297,10 +268,6 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
     partition.save()
     LED_off(book)
 
-    LED_books = Book.objects.filter(partition=partition, book_state=1)|Book.objects.filter(partition=partition, book_state=3)
-    for book in LED_books:
-        LED_off(book)
-        LED_on(book)
 
     return redirect('off')
 

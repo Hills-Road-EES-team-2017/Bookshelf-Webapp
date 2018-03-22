@@ -15,7 +15,12 @@ GPIO.setwarnings(False)
 speed = 0.0000025
 number_of_LEDs = 60
 number_of_strips = 10
-LEDs = [ [int]*number_of_LEDs, ]*number_of_strips
+LEDs = []
+for x in range(number_of_strips):
+    LEDs.append([])
+    for y in range(number_of_LEDs):
+        LEDs[x].append(3758096384)
+
 
 
 def initialise():
@@ -47,10 +52,21 @@ def send_32bits(shelf, data):
     spi.xfer(send_data)
                 
 def LED_function(shelf, distance, colour):
+    print(shelf, distance, colour)
+    print()
     #API LEDs
     #update array
     colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
     LEDposition = int (distance/16.5)
+    
+    for i in range(int(len(LEDs[shelf])/2)): #Finds nearest LED not on already
+        if LEDs[shelf][LEDposition+i] == 3758096384: #If equal to "O"
+            LEDposition += i
+            break
+        elif LEDs[shelf][LEDposition-i] == 3758096384:
+            LEDposition -= i
+            break
+        
     # Assigns colour to required LED
     LEDs[shelf][LEDposition] = colourDict[colour]
     #light LED Strip
@@ -62,5 +78,22 @@ def LED_function(shelf, distance, colour):
     #End frame - all 1s
     send_32bits(shelf, 0x11111111)
 
+def LED_colour_off(shelf, colour):
+    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
+    LEDposition = 0
+    for LED_number in range(len(LEDs[shelf])):
+        if LEDs[shelf][LED_number] == colourDict[colour]:
+            LEDposition = LED_number
+            break
 
+    LEDs[shelf][LEDposition] = colourDict["O"]
+
+            
+    #start frame - all 0s
+    send_32bits(shelf,0x00000000)
+    for LED_number in range(number_of_LEDs):
+        # Sends data to each LED
+        send_32bits(shelf, LEDs[shelf][LED_number])
+    #End frame - all 1s
+    send_32bits(shelf, 0x11111111)
                                                                          
