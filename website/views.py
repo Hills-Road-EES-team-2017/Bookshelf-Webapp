@@ -11,9 +11,6 @@ from .forms import AddBookForm
 #import time
 #import spidev
 
-class Ghost_partition:
-    def __init__(self, level=0):
-        self.book_level = level
 
 def initialise():
     pass
@@ -21,12 +18,9 @@ def initialise():
 def LED_function(shelf,distance,colour):
     colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
     LED = int(distance/16)
-    print ()
-    print (shelf,distance,colour,LED)
-    print ()
-    print(colourDict[colour])
     LEDs[shelf][LED] = colourDict[colour]
-    print (LEDs[shelf][LED])
+    print(LED)
+    print()
 
 
 #spi = spidev.SpiDev()
@@ -55,6 +49,7 @@ def show_book_order(partition): # For testing return mechanism
     for book in ordered_books:
         print(book.title,book.book_width,book.partition_depth)
     print()
+
 
 def get_basket(user): # Retrieves list of books in the user's basket
     basket = Book.objects.filter(customer=user.id, book_state=5)|Book.objects.filter(customer=user.id, book_state=6)
@@ -89,7 +84,6 @@ def LED_on(book):  # Formulates appropriate input for strips function
         elif LEDs[shelf][LED-i] == 3758096384:
             distance -= 16*i
             break
-
     LED_function(shelf, distance, colour)
 
 def LED_off(book):
@@ -121,7 +115,6 @@ def homepage(request): # View for list of all books in library
     search = ""
     add_button = is_master(request.user) # For adding the 'add book' button if on certain account
 
-    ## show_book_order(Partition.objects.get(pk=11))
 
     try: # Inital load of page will yield error, as there is no post request
         search = request.POST['search']
@@ -179,20 +172,18 @@ def delete_basket(request, book_id): # Non-user view for deleting a book from th
     TAKING_BASKET = 5
     RETURNING_BASKET = 6
 
-    basket = get_basket(request.user)
     book = get_object_or_404(Book, pk=book_id)
-    if book in basket:
+    if book.customer == request.user:
         if book.book_state == TAKING_BASKET:
             book.book_state = AVAILABLE
         elif book.book_state == RETURNING_BASKET:
-            book.book_State = TAKEN
+            book.book_state = TAKEN
         book.save()
     return redirect('basket')
 
 @login_required
 def map(request): # View for displaying details of position about books
-    ghost_partitions = []
-    
+
     user_basket = get_basket(request.user)
     returning_basket = []
     # Isolates books that are being returned
@@ -202,25 +193,23 @@ def map(request): # View for displaying details of position about books
     found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
 
 
-    for each_part in found_partitions:
-        ghost_partitions.append(Ghost_partition(level=0))
-        books = Book.objects.filter(partition=each_part)
-        for other in books:
-            if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
-                ghost_partitions[-1].book_level += other.book_width
-
 
 
     sections = []
-    index = 0
+    i = 0
     for book in user_basket:
         # Assigns a new partition to books being returned
         if book in returning_basket:
-            book.partition = found_partitions[index]
-            book.partition_depth = ghost_partitions[user_basket.index(book)].book_level
-            ghost_partitions[user_basket.index(book)].book_level += book.book_width
+            book.partition = found_partitions[i]
+            partition_books = Book.objects.filter(partition=found_partitions[i])
+            partition_books = sorted(partition_books, key=lambda p: p.partition_depth, reverse=True)
+            book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
             book.save()
-            index += 1
+            for found_partition in found_partitions:
+                if found_partition == book.partition:
+                    book.partition_depth += user_basket[found_partitions.index(found_partition)].book_width
+            book.save()
+            i+= 1
         # Adds section of all books to the list of sections for HMTL
         sections.append(book.partition.section.name)
 
@@ -303,11 +292,15 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
         book.save()
         for other in further_books:
             if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
-                print(other.title, other.book_state)
                 book.partition_depth += other.book_width
     book.save()
     partition.save()
     LED_off(book)
+
+    LED_books = Book.objects.filter(partition=partition, book_state=1)|Book.objects.filter(partition=partition, book_state=3)
+    for book in LED_books:
+        LED_off(book)
+        LED_on(book)
 
     return redirect('off')
 
