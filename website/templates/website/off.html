@@ -11,6 +11,9 @@
 <body>
 <h1>LED turned on/off!</h1>
 <br>
-<a href="{% url 'leds_off' %}">Okay!</a>
+{% for book in basket%}
+    <a href="{% url 'leds_off' book_id=book.id %}">{{book.get_colour_display}}</a>
+    <br>
+{% endfor %}
 </body>
 </html>

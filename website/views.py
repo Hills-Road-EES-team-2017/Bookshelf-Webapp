@@ -56,7 +56,6 @@ def show_book_order(partition): # For testing return mechanism
         print(book.title,book.book_width,book.partition_depth)
     print()
 
-
 def get_basket(user): # Retrieves list of books in the user's basket
     basket = Book.objects.filter(customer=user.id, book_state=5)|Book.objects.filter(customer=user.id, book_state=6)
     list_basket = []
@@ -263,52 +262,54 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
 
 @login_required
 def off(request):
-    return render(request, 'website/off.html')
+    basket = get_returning_books(request.user)
+    if basket == []:
+        return redirect('homepage')
+    else:
+        return render(request, 'website/off.html', {"basket": basket})
 
 @login_required
-def leds_off(request): # Placeholder view to simulate pressing of button, with changes of states included
+def leds_off(request,book_id): # Placeholder view to simulate pressing of buttons, with changes of states included
     AVAILABLE = 0
     TAKING = 1
     TAKEN = 2
     RETURNING = 3
-    user_basket = get_returning_books(request.user)
-    for book in user_basket:
-        partition = get_object_or_404(Partition, pk=book.partition.id)
-        if book.book_state == TAKING:
-            # Set to taken
-            book.book_state = TAKEN
-            book.last_taken = datetime.now()
-            book.last_updated = datetime.now()
-            # Space on the partition increased
-            partition.partition_space += book.book_width
-            # All other books on partition
-            further_books = Book.objects.filter(partition=book.partition).exclude(pk=book.id)
-            for other in further_books:
-                # Books on the partition further right than selected book
-                if other.partition_depth > book.partition_depth:
-                    # Moved to the left
-                    other.partition_depth -= book.book_width
-                    other.save()
+    book = Book.objects.get(pk=book_id)
+    partition = get_object_or_404(Partition, pk=book.partition.id)
+    if book.book_state == TAKING:
+        # Set to taken
+        book.book_state = TAKEN
+        book.last_taken = datetime.now()
+        book.last_updated = datetime.now()
+        # Space on the partition increased
+        partition.partition_space += book.book_width
+        # All other books on partition
+        further_books = Book.objects.filter(partition=book.partition).exclude(pk=book.id)
+        for other in further_books:
+            # Books on the partition further right than selected book
+            if other.partition_depth > book.partition_depth:
+                # Moved to the left
+                other.partition_depth -= book.book_width
+                other.save()
 
-        elif book.book_state == RETURNING:
-            # Set to available
-            book.book_state = AVAILABLE
-            book.last_updated = datetime.now()
-            partition.partition_space -= book.book_width
-            further_books = Book.objects.filter(partition=book.partition).exclude(pk=book.id)
-            # Sets partition depth to 0, then adds on book width of all other books on partition
-            book.partition_depth = 0
-            book.save()
-            for other in further_books:
-                if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
-                    print(other.title, other.book_state)
-                    book.partition_depth += other.book_width
+    elif book.book_state == RETURNING:
+        # Set to available
+        book.book_state = AVAILABLE
+        book.last_updated = datetime.now()
+        partition.partition_space -= book.book_width
+        further_books = Book.objects.filter(partition=book.partition).exclude(pk=book.id)
+        # Sets partition depth to 0, then adds on book width of all other books on partition
+        book.partition_depth = 0
         book.save()
-        partition.save()
-        LED_off(book)
+        for other in further_books:
+            if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
+                print(other.title, other.book_state)
+                book.partition_depth += other.book_width
+    book.save()
+    partition.save()
+    LED_off(book)
 
-        
-    return redirect('homepage')
+    return redirect('off')
 
 def is_master(user): # Function to determine if the 'master' superuser is logged in
     if user.username == 'master' and user.is_superuser:
