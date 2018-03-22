@@ -24,6 +24,16 @@ from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 
 initialise()
 
+def API_Get_Button():
+    if not GPIO.input(22): # RED Button
+        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='R')|Book.objects.filter(partition_section__name='A', book_state=3)
+        return redirect('led_off',book_id=book.id) #pressed
+    if not GPIO.input(18): # GREEN Button
+        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='G')|Book.objects.filter(partition_section__name='A', book_state=3)
+        return redirect('led_off',book_id=book.id) #pressed
+    if not GPIO.input(16): # YELLOW Button pressed
+        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='Y')|Book.objects.filter(partition_section__name='A', book_state=3)
+        return redirect('led_off',book_id=book.id) #pressed
 
 
 def show_book_order(partition): # For testing return mechanism
