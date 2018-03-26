@@ -9,6 +9,13 @@ from .forms import AddBookForm
 from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 
 
+#number_of_strips = 10
+#number_of_LEDs = 60
+#LEDs = []
+#for x in range(number_of_strips):
+#    LEDs.append([])
+#    for y in range(number_of_LEDs):
+#        LEDs[x].append(3758096384)
 
 #def initialise():
 #    pass
@@ -20,7 +27,15 @@ from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 #    print(LED)
 #    print()
 
+#def LED_colour_off(shelf, colour):
+#    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
+#    LEDposition = 0
+#    for LED_number in range(len(LEDs[shelf])):
+#        if LEDs[shelf][LED_number] == colourDict[colour]:
+#            LEDposition = LED_number
+#            break
 
+#    LEDs[shelf][LEDposition] = colourDict["O"]
 
 initialise()
 
@@ -277,6 +292,14 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
     book.save()
     partition.save()
     LED_off(book)
+
+
+    # LED update feature, updates LED position when books taken
+    LED_books = Book.objects.filter(partition=partition, book_state=1) | Book.objects.filter(partition=partition,
+                                                                                             book_state=3)
+    for book in LED_books:
+        LED_off(book)
+        LED_on(book)
 
 
     return redirect('off')
