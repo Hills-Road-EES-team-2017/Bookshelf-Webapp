@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
-from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
+from .LED_functions import initialise, LED_function, LED_colour_off
 
 
 #number_of_strips = 10
@@ -188,9 +188,6 @@ def map(request): # View for displaying details of position about books
             returning_basket.append(book)
     found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
 
-
-
-
     sections = []
     i = 0
     for book in user_basket:
@@ -221,6 +218,8 @@ def map(request): # View for displaying details of position about books
 
     zipped_books = zip(user_basket, sections)
     return render(request, 'website/maps.html', {'basket': zipped_books})
+
+
 @login_required
 def leds(request): # Non-user view for turning on LEDs and updating the states of books
 
@@ -230,7 +229,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
     RETURNING_BASKET = 6
 
     basket = get_basket(request.user)
-    # Updates relevent fields of books being taken/returned
+    # Updates relevant fields of books being taken/returned
     for book in basket:
         if book.book_state == TAKING_BASKET:
             book.book_state = TAKING
@@ -245,6 +244,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
     show_book_order(Partition.objects.get(pk=basket[0].partition.id))
     return redirect('off')
 
+
 @login_required
 def off(request):
     basket = get_returning_books(request.user)
@@ -252,6 +252,7 @@ def off(request):
         return redirect('homepage')
     else:
         return render(request, 'website/off.html', {"basket": basket})
+
 
 @login_required
 def leds_off(request,book_id): # Placeholder view to simulate pressing of buttons, with changes of states included
@@ -293,6 +294,11 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
     partition.save()
     LED_off(book)
 
+    # LED update feature, updates LED position when books taken
+    LED_books = Book.objects.filter(partition=partition, book_state=1) | Book.objects.filter(partition=partition, book_state=3)
+    for book in LED_books:
+        LED_off(book)
+        LED_on(book)
 
     # LED update feature, updates LED position when books taken
     LED_books = Book.objects.filter(partition=partition, book_state=1) | Book.objects.filter(partition=partition,
@@ -301,8 +307,8 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
         LED_off(book)
         LED_on(book)
 
-
     return redirect('off')
+
 
 def is_master(user): # Function to determine if the 'master' superuser is logged in
     if user.username == 'master' and user.is_superuser:
@@ -310,12 +316,14 @@ def is_master(user): # Function to determine if the 'master' superuser is logged
     else:
         return False
 
+
 @user_passes_test(is_master)
 def delete_book(request, book_id): # Non-user view which deletes book from database
     book = Book.objects.get(pk=book_id)
     if book.book_state == 2:
         book.delete()
     return redirect('homepage')
+
 
 @user_passes_test(is_master)
 def add_book(request): # Master-only view which allows new book to be created
