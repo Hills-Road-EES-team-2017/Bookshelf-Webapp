@@ -194,12 +194,15 @@ def map(request): # View for displaying details of position about books
         # Assigns a new partition to books being returned
         if book in returning_basket:
             book.partition = found_partitions[i]
-            partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id)
-            partition_books = sorted(partition_books, key=lambda p: p.partition_depth, reverse=True)
-            if partition_books == []:
-                book.partition_depth = 0
-            else:
-                book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
+            partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id).exclude(book_state=6)
+            book.partition_depth = 0
+            for partition_book in partition_books: # Adds width of all books on partition at that time
+                book.partition_depth += partition_book.book_width
+                book.save()
+            for books in returning_basket[:i-1]: # Adds widths of all books that are going to be on before
+                if books.partition == book.partition:
+                    book.partition_depth += books.book_width
+
             book.save()
             i+= 1
         # Adds section of all books to the list of sections for HMTL
@@ -241,13 +244,13 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         #Turns on LEDs
         LED_on(book)
         
-    show_book_order(Partition.objects.get(pk=basket[0].partition.id))
     return redirect('off')
 
 
 @login_required
 def off(request):
     basket = get_returning_books(request.user)
+    show_book_order(Partition.objects.get(pk=1))
     if basket == []:
         return redirect('homepage')
     else:
@@ -260,6 +263,8 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
     TAKING = 1
     TAKEN = 2
     RETURNING = 3
+    TAKING_BASKET = 5
+    RETURNING_BASKET = 6
     book = Book.objects.get(pk=book_id)
     partition = get_object_or_404(Partition, pk=book.partition.id)
     if book.book_state == TAKING:
@@ -287,8 +292,9 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
         # Sets partition depth to 0, then adds on book width of all other books on partition
         book.partition_depth = 0
         book.save()
+        show_book_order(partition)
         for other in further_books:
-            if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
+            if other.book_state == AVAILABLE or other.book_state == TAKING or other.book_state == TAKING_BASKET or other.book_state == 4:
                 book.partition_depth += other.book_width
     book.save()
     partition.save()
@@ -296,16 +302,12 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
 
     # LED update feature, updates LED position when books taken
     LED_books = Book.objects.filter(partition=partition, book_state=1) | Book.objects.filter(partition=partition, book_state=3)
-    for book in LED_books:
-        LED_off(book)
-        LED_on(book)
+    for LED_book in LED_books:
+        LED_off(LED_book)
+        LED_on(LED_book)
 
-    # LED update feature, updates LED position when books taken
-    LED_books = Book.objects.filter(partition=partition, book_state=1) | Book.objects.filter(partition=partition,
-                                                                                             book_state=3)
-    for book in LED_books:
-        LED_off(book)
-        LED_on(book)
+    show_book_order(partition)
+
 
     return redirect('off')
 
