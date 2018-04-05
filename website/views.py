@@ -6,49 +6,49 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
-from .LED_functions import initialise, LED_function, LED_colour_off
+#from .LED_functions import initialise, LED_function, LED_colour_off
 
 
-#number_of_strips = 10
-#number_of_LEDs = 60
-#LEDs = []
-#for x in range(number_of_strips):
-#    LEDs.append([])
-#    for y in range(number_of_LEDs):
-#        LEDs[x].append(3758096384)
+number_of_strips = 10
+number_of_LEDs = 60
+LEDs = []
+for x in range(number_of_strips):
+   LEDs.append([])
+   for y in range(number_of_LEDs):
+       LEDs[x].append(3758096384)
 
-#def initialise():
-#    pass
+def initialise():
+   pass
 
-#def LED_function(shelf,distance,colour):
-#    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-#    LED = int(distance/16)
-#    LEDs[shelf][LED] = colourDict[colour]
-#    print(LED)
-#    print()
+def LED_function(shelf,distance,colour):
+   colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
+   LED = int(distance/16)
+   LEDs[shelf][LED] = colourDict[colour]
+   print(LED)
+   print()
 
-#def LED_colour_off(shelf, colour):
-#    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-#    LEDposition = 0
-#    for LED_number in range(len(LEDs[shelf])):
-#        if LEDs[shelf][LED_number] == colourDict[colour]:
-#            LEDposition = LED_number
-#            break
+def LED_colour_off(shelf, colour):
+   colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
+   LEDposition = 0
+   for LED_number in range(len(LEDs[shelf])):
+       if LEDs[shelf][LED_number] == colourDict[colour]:
+           LEDposition = LED_number
+           break
 
-#    LEDs[shelf][LEDposition] = colourDict["O"]
+   LEDs[shelf][LEDposition] = colourDict["O"]
 
 initialise()
 
-def API_Get_Button():
-    if not GPIO.input(22): # RED Button
-        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='R')|Book.objects.filter(partition_section__name='A', book_state=3)
-        return redirect('led_off',book_id=book.id) #pressed
-    if not GPIO.input(18): # GREEN Button
-        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='G')|Book.objects.filter(partition_section__name='A', book_state=3)
-        return redirect('led_off',book_id=book.id) #pressed
-    if not GPIO.input(16): # YELLOW Button pressed
-        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='Y')|Book.objects.filter(partition_section__name='A', book_state=3)
-        return redirect('led_off',book_id=book.id) #pressed
+# def API_Get_Button():
+#     if not GPIO.input(22): # RED Button
+#         book = Book.objects.filter(partition_section__name='A', book_state=1, colour='R')|Book.objects.filter(partition_section__name='A', book_state=3)
+#         return redirect('led_off',book_id=book.id) #pressed
+#     if not GPIO.input(18): # GREEN Button
+#         book = Book.objects.filter(partition_section__name='A', book_state=1, colour='G')|Book.objects.filter(partition_section__name='A', book_state=3)
+#         return redirect('led_off',book_id=book.id) #pressed
+#     if not GPIO.input(16): # YELLOW Button pressed
+#         book = Book.objects.filter(partition_section__name='A', book_state=1, colour='Y')|Book.objects.filter(partition_section__name='A', book_state=3)
+#         return redirect('led_off',book_id=book.id) #pressed
 
 
 def show_book_order(partition): # For testing return mechanism
@@ -250,7 +250,6 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
 @login_required
 def off(request):
     basket = get_returning_books(request.user)
-    show_book_order(Partition.objects.get(pk=1))
     if basket == []:
         return redirect('homepage')
     else:
@@ -292,7 +291,6 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
         # Sets partition depth to 0, then adds on book width of all other books on partition
         book.partition_depth = 0
         book.save()
-        show_book_order(partition)
         for other in further_books:
             if other.book_state == AVAILABLE or other.book_state == TAKING or other.book_state == TAKING_BASKET or other.book_state == 4:
                 book.partition_depth += other.book_width
@@ -306,7 +304,6 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
         LED_off(LED_book)
         LED_on(LED_book)
 
-    show_book_order(partition)
 
 
     return redirect('off')
