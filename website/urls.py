@@ -13,6 +13,7 @@ urlpatterns = [
     url(r'^logout/$', auth_views.logout, {'next_page': '/'}, name='logout'),
 
     url(r'^delete_book(?P<book_id>[\w-]+)', views.delete_book, name="delete_book"),
+    #path('websocket/', views.websocket_page, name='websocket_page'),
     path('add_book/', views.add_book, name='add_book'),
     path('off/', views.off, name='off'),
     path('taken/', views.taken, name='taken'),
@@ -25,6 +26,7 @@ urlpatterns = [
     url(r'^leds_off(?P<book_id>[\w-]+)', views.leds_off, name="leds_off"),
     url(r'^update(?P<book_id>[\w-]+)', views.update_basket, name="update_basket"),
     url(r'^delete(?P<book_id>[\w-]+)', views.delete_basket, name="delete_basket"),
+
 
 ]
 

@@ -1,6 +1,8 @@
 import RPi.GPIO as GPIO
 import time
 import spidev
+import asyncio
+import websockets
 spi = spidev.SpiDev()
 spi.open(0,1)
 spi.max_speed_hz = 1000000
@@ -20,7 +22,6 @@ for x in range(number_of_strips):
     LEDs.append([])
     for y in range(number_of_LEDs):
         LEDs[x].append(3758096384)
-
 
 
 def initialise():
@@ -96,4 +97,16 @@ def LED_colour_off(shelf, colour):
         send_32bits(shelf, LEDs[shelf][LED_number])
     #End frame - all 1s
     send_32bits(shelf, 0x11111111)
-                                                                         
+
+
+def API_Get_Button():
+    if not GPIO.input(22): # RED Button
+        button('R') #pressed
+    if not GPIO.input(18): # GREEN Button
+        button('G')  # pressed
+    if not GPIO.input(16): # YELLOW Button pressed
+        button('Y')  # pressed
+
+def button(colour):
+    # SEND COLOUR TO PI VIA WEBSOCKET
+    pass

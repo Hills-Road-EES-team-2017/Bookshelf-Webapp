@@ -6,6 +6,8 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
+import json
+from django.utils.safestring import mark_safe
 #from .LED_functions import initialise, LED_function, LED_colour_off
 
 
