@@ -25,7 +25,7 @@ SECRET_KEY = 'w0^%8k@-v!vk*7weyy5ell@rznfwji4r4ug#u#g2&$)lfo1p4v'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["www.eeslibrary.com", "192.168.1.14", "192.168.1.16", "192.168.56.101"]
+ALLOWED_HOSTS = ["www.eeslibrary.com"]
 
 
 LOGIN_REDIRECT_URL = 'homepage'
@@ -34,7 +34,6 @@ LOGIN_URL = 'login'
 # Application definition
 
 INSTALLED_APPS = [
-    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -123,17 +122,3 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
-
-
-# Channel layer settings
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("redis-server-name", 6379)],
-        },
-    },
-}
-
-ASGI_APPLICATION = "Bookshelf_Webapp.routing.application"

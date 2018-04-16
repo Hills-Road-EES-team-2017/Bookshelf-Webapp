@@ -6,51 +6,34 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
-import json
-from django.utils.safestring import mark_safe
-#from .LED_functions import initialise, LED_function, LED_colour_off
+from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 
 
-number_of_strips = 10
-number_of_LEDs = 60
-LEDs = []
-for x in range(number_of_strips):
-   LEDs.append([])
-   for y in range(number_of_LEDs):
-       LEDs[x].append(3758096384)
 
-def initialise():
-   pass
+#def initialise():
+#    pass
 
-def LED_function(shelf,distance,colour):
-   colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-   LED = int(distance/16)
-   LEDs[shelf][LED] = colourDict[colour]
-   print(LED)
-   print()
+#def LED_function(shelf,distance,colour):
+#    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
+#    LED = int(distance/16)
+#    LEDs[shelf][LED] = colourDict[colour]
+#    print(LED)
+#    print()
 
-def LED_colour_off(shelf, colour):
-   colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-   LEDposition = 0
-   for LED_number in range(len(LEDs[shelf])):
-       if LEDs[shelf][LED_number] == colourDict[colour]:
-           LEDposition = LED_number
-           break
 
-   LEDs[shelf][LEDposition] = colourDict["O"]
 
 initialise()
 
-# def API_Get_Button():
-#     if not GPIO.input(22): # RED Button
-#         book = Book.objects.filter(partition_section__name='A', book_state=1, colour='R')|Book.objects.filter(partition_section__name='A', book_state=3)
-#         return redirect('led_off',book_id=book.id) #pressed
-#     if not GPIO.input(18): # GREEN Button
-#         book = Book.objects.filter(partition_section__name='A', book_state=1, colour='G')|Book.objects.filter(partition_section__name='A', book_state=3)
-#         return redirect('led_off',book_id=book.id) #pressed
-#     if not GPIO.input(16): # YELLOW Button pressed
-#         book = Book.objects.filter(partition_section__name='A', book_state=1, colour='Y')|Book.objects.filter(partition_section__name='A', book_state=3)
-#         return redirect('led_off',book_id=book.id) #pressed
+def API_Get_Button():
+    if not GPIO.input(22): # RED Button
+        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='R')|Book.objects.filter(partition_section__name='A', book_state=3)
+        return redirect('led_off',book_id=book.id) #pressed
+    if not GPIO.input(18): # GREEN Button
+        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='G')|Book.objects.filter(partition_section__name='A', book_state=3)
+        return redirect('led_off',book_id=book.id) #pressed
+    if not GPIO.input(16): # YELLOW Button pressed
+        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='Y')|Book.objects.filter(partition_section__name='A', book_state=3)
+        return redirect('led_off',book_id=book.id) #pressed
 
 
 def show_book_order(partition): # For testing return mechanism
@@ -190,21 +173,21 @@ def map(request): # View for displaying details of position about books
             returning_basket.append(book)
     found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
 
+
+
+
     sections = []
     i = 0
     for book in user_basket:
         # Assigns a new partition to books being returned
         if book in returning_basket:
             book.partition = found_partitions[i]
-            partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id).exclude(book_state=6)
-            book.partition_depth = 0
-            for partition_book in partition_books: # Adds width of all books on partition at that time
-                book.partition_depth += partition_book.book_width
-                book.save()
-            for books in returning_basket[:i-1]: # Adds widths of all books that are going to be on before
-                if books.partition == book.partition:
-                    book.partition_depth += books.book_width
-
+            partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id)
+            partition_books = sorted(partition_books, key=lambda p: p.partition_depth, reverse=True)
+            if partition_books == []:
+                book.partition_depth = 0
+            else:
+                book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
             book.save()
             i+= 1
         # Adds section of all books to the list of sections for HMTL
@@ -223,8 +206,6 @@ def map(request): # View for displaying details of position about books
 
     zipped_books = zip(user_basket, sections)
     return render(request, 'website/maps.html', {'basket': zipped_books})
-
-
 @login_required
 def leds(request): # Non-user view for turning on LEDs and updating the states of books
 
@@ -234,7 +215,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
     RETURNING_BASKET = 6
 
     basket = get_basket(request.user)
-    # Updates relevant fields of books being taken/returned
+    # Updates relevent fields of books being taken/returned
     for book in basket:
         if book.book_state == TAKING_BASKET:
             book.book_state = TAKING
@@ -246,8 +227,8 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         #Turns on LEDs
         LED_on(book)
         
+    show_book_order(Partition.objects.get(pk=basket[0].partition.id))
     return redirect('off')
-
 
 @login_required
 def off(request):
@@ -257,15 +238,12 @@ def off(request):
     else:
         return render(request, 'website/off.html', {"basket": basket})
 
-
 @login_required
 def leds_off(request,book_id): # Placeholder view to simulate pressing of buttons, with changes of states included
     AVAILABLE = 0
     TAKING = 1
     TAKEN = 2
     RETURNING = 3
-    TAKING_BASKET = 5
-    RETURNING_BASKET = 6
     book = Book.objects.get(pk=book_id)
     partition = get_object_or_404(Partition, pk=book.partition.id)
     if book.book_state == TAKING:
@@ -294,22 +272,14 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
         book.partition_depth = 0
         book.save()
         for other in further_books:
-            if other.book_state == AVAILABLE or other.book_state == TAKING or other.book_state == TAKING_BASKET or other.book_state == 4:
+            if other.book_state!=2 and other.book_state!=3 and other.book_state!=6:
                 book.partition_depth += other.book_width
     book.save()
     partition.save()
     LED_off(book)
 
-    # LED update feature, updates LED position when books taken
-    LED_books = Book.objects.filter(partition=partition, book_state=1) | Book.objects.filter(partition=partition, book_state=3)
-    for LED_book in LED_books:
-        LED_off(LED_book)
-        LED_on(LED_book)
-
-
 
     return redirect('off')
-
 
 def is_master(user): # Function to determine if the 'master' superuser is logged in
     if user.username == 'master' and user.is_superuser:
@@ -317,14 +287,12 @@ def is_master(user): # Function to determine if the 'master' superuser is logged
     else:
         return False
 
-
 @user_passes_test(is_master)
 def delete_book(request, book_id): # Non-user view which deletes book from database
     book = Book.objects.get(pk=book_id)
     if book.book_state == 2:
         book.delete()
     return redirect('homepage')
-
 
 @user_passes_test(is_master)
 def add_book(request): # Master-only view which allows new book to be created
