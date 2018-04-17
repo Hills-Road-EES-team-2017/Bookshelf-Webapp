@@ -1,6 +1,82 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../../../favicon.ico">
+
+    <title>Welcome to the Homepage</title>
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+
+    <!-- Custom styles for this template -->
+    <link href="{% static 'website/navbar-top-fixed.css' %}" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+      <a class="navbar-brand" href="{% url 'homepage' %}"><img src="/static/Hills_road_school_logo.svg" height="40" alt="Hills Road EES Library"></a>
+      <div class="collapse navbar-collapse" id="navbarCollapse">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a href="{% url 'homepage' %}"><button type="button" class="btn btn-success">Take Out</button></a>
+            </li>
+          <li class="nav-item">
+            <div class="col-sm-4">
+            <a href="{% url 'taken' %}"><button type="button" class="btn btn-success">Return</button></a>
+          </li>
+          <li class="nav-item">
+            <div class="col-sm-4">
+            <a href="{% url 'basket' %}"><button type="button" class="btn btn-success">Basket</button></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main role="main" class="container">
+      {% comment %}
+      <div class="jumbotron">
+        <h1>Navbar example</h1>
+        <p class="lead">This example is a quick exercise to illustrate how fixed to top navbar works. As you scroll, it will remain fixed to the top of your browser's viewport.</p>
+        <a class="btn btn-lg btn-primary" href="../../components/navbar/" role="button">View navbar docs &raquo;</a>
+      </div>
+      {% endcomment %}
+      {% block body %}{% endblock %}
+    </main>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script>window.jQuery || document.write('<script src="../../../../assets/js/vendor/jquery-slim.min.js"><\/script>')</script>
+  </body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+{% comment %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
     {% load static %}
     <link rel="stylesheet" type="text/css" href="{% static 'website/style.css' %}" />
     <meta charset="UTF-8">
@@ -19,3 +95,4 @@
 </options>
 <div id="content">{% block body %}{% endblock %}</div>
 </html>
+{% endcomment %}

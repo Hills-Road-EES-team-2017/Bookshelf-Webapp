@@ -15,7 +15,9 @@
         <a href="{% url 'delete_book' book_id=book.id%}">Delete book</a>
         {% endif %}
     {% else %}
-    Book unavailable
+    <div class="container">
+  <div class="jumbotron">
+    <a>Sorry, this book is <p class="text-danger">unavailable</p>.</a>
     {% endif %}
 </info>
 {% endblock %}
