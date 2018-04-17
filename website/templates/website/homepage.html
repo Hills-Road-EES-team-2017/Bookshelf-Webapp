@@ -29,7 +29,7 @@
         </tr>
         {% for book in book_list %}
         <tr>
-            <td><a href="{% url 'detail' book.title %}">{{ book.title }}</a></td>
+            <td><a href="{% url 'detail' book.id %}">{{ book.title }}</a></td>
             <td>{{ book.author }}</td>
             {% if book.book_state == 0 %}
                 <td class="available">{{book.get_book_state_display}}</td>

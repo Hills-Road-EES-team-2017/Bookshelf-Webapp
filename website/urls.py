@@ -18,9 +18,10 @@ urlpatterns = [
     path('taken/', views.taken, name='taken'),
     path('', views.homepage, name='homepage'),
     path('basket/', views.basket, name='basket'),
-    path('<str:book_title>/', views.detail, name='detail'),
+    path('<int:book_id>/', views.detail, name='detail'),
     path('basket/map', views.map, name='map'),
     path('basket/map/leds/', views.leds, name='leds'),
+    path('off/<str:colour>/', views.pirequest, name='pirequest'),
 
     url(r'^leds_off(?P<book_id>[\w-]+)', views.leds_off, name="leds_off"),
     url(r'^update(?P<book_id>[\w-]+)', views.update_basket, name="update_basket"),

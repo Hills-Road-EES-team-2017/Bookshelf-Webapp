@@ -24,16 +24,27 @@ from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 
 initialise()
 
-def API_Get_Button():
-    if not GPIO.input(22): # RED Button
-        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='R')|Book.objects.filter(partition_section__name='A', book_state=3)
-        return redirect('led_off',book_id=book.id) #pressed
-    if not GPIO.input(18): # GREEN Button
-        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='G')|Book.objects.filter(partition_section__name='A', book_state=3)
-        return redirect('led_off',book_id=book.id) #pressed
-    if not GPIO.input(16): # YELLOW Button pressed
-        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='Y')|Book.objects.filter(partition_section__name='A', book_state=3)
-        return redirect('led_off',book_id=book.id) #pressed
+#def API_Get_Button():
+#    if not GPIO.input(22): # RED Button
+#        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='R')|Book.objects.filter(partition_section__name='A', book_state=3)
+#        return redirect('led_off',book_id=book.id) #pressed
+#    if not GPIO.input(18): # GREEN Button
+#        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='G')|Book.objects.filter(partition_section__name='A', book_state=3)
+#        return redirect('led_off',book_id=book.id) #pressed
+#    if not GPIO.input(16): # YELLOW Button pressed
+#        book = Book.objects.filter(partition_section__name='A', book_state=1, colour='Y')|Book.objects.filter(partition_section__name='A', book_state=3)
+#        return redirect('led_off',book_id=book.id) #pressed
+
+
+def pirequest(request, colour):
+    try:
+        print(colour)
+        book = Book.objects.filter(colour=colour, book_state=1)|Book.objects.filter(colour=colour,book_state=3)
+    except:
+        print('Error pressing button?....')
+        return redirect('homepage')
+    else:
+        return redirect('leds_off', book_id=book[0].id)
 
 
 def show_book_order(partition): # For testing return mechanism
@@ -71,6 +82,7 @@ def LED_on(book):  # Formulates appropriate input for strips function
     colour = book.colour
     LED_function(shelf, distance, colour)
 
+
 def LED_off(book):
     partitions = Partition.objects.all() # To return shelf number not partition id
     shelf_number = []
@@ -107,10 +119,22 @@ def homepage(request): # View for list of all books in library
     # Displays homepage.html where book_list is the values from line above and states is the possible string states
     return render(request, 'website/homepage.html', {'book_list': book_list, 'current_user': request.user.username, 'searched': search, 'add_button': add_button})
 
+
 @login_required
-def detail(request, book_title): # View for details of each book individually
+def detail(request, book_id): # View for details of each book individually
     # Retrieves book based on title
-    book = get_object_or_404(Book, title=book_title)
+    #try:
+    #    print("Error not yet occured ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+    #    books = Book.objects.filter(title=book_title)
+    #except:
+    #    return redirect('homepage')
+    #book = ''
+    #for book_option in books:
+    #    if book_option.book_state == 0:
+    #        book = book_option
+    #if book == '':
+    #    book = books[0]
+    book = Book.objects.get(pk=book_id)
     if book.book_state == 0: # If available
         taking = 0 # Context variable for HMTL
     elif book.book_state == 2 and book.customer == request.user: #Only if book is taken by user logged in
@@ -120,10 +144,12 @@ def detail(request, book_title): # View for details of each book individually
     master = is_master(request.user) # For adding 'delete book' button if on certain account
     return render(request, 'website/detail.html', {'book': book, 'current_user': request.user.username, 'taking': taking, 'master': master})
 
+
 @login_required
 def basket(request): # View for displaying user's basket
     user_basket = get_basket(request.user)
     return render(request, 'website/basket.html', {'basket': user_basket, 'current_user':request.user.username})
+
 
 @login_required
 def update_basket(request, book_id): # Non-user view for updating the record of a book being added to basket
@@ -132,7 +158,10 @@ def update_basket(request, book_id): # Non-user view for updating the record of 
     TAKEN = 2
     TAKING_BASKET = 5
     RETURNING_BASKET = 6
-
+    BASKET_LIMIT = 3
+    user_basket = get_basket(request.user)
+    if len(user_basket) >= BASKET_LIMIT:
+        return redirect('homepage')
     if book.book_state == AVAILABLE: # If taking book
         # Set to taking
         book.book_state = TAKING_BASKET
@@ -144,6 +173,7 @@ def update_basket(request, book_id): # Non-user view for updating the record of 
         return redirect('homepage')
     book.save()
     return redirect('basket')
+
 
 @login_required
 def delete_basket(request, book_id): # Non-user view for deleting a book from the basket
@@ -161,6 +191,7 @@ def delete_basket(request, book_id): # Non-user view for deleting a book from th
             book.book_state = TAKEN
         book.save()
     return redirect('basket')
+
 
 @login_required
 def map(request): # View for displaying details of position about books
@@ -181,15 +212,23 @@ def map(request): # View for displaying details of position about books
     for book in user_basket:
         # Assigns a new partition to books being returned
         if book in returning_basket:
-            book.partition = found_partitions[i]
-            partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id)
-            partition_books = sorted(partition_books, key=lambda p: p.partition_depth, reverse=True)
-            if partition_books == []:
-                book.partition_depth = 0
+            if found_partitions[i] == '':
+                returning_basket.pop(i)
+                user_basket.pop(i)
+                book.book_state = 2
+                book.save()
+                if len(user_basket) == 0:
+                    return redirect('homepage')
             else:
-                book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
-            book.save()
-            i+= 1
+                book.partition = found_partitions[i]
+                partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id)
+                partition_books = sorted(partition_books, key=lambda p: p.partition_depth, reverse=True)
+                if partition_books == []:
+                    book.partition_depth = 0
+                else:
+                    book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
+                book.save()
+                i+= 1
         # Adds section of all books to the list of sections for HMTL
         sections.append(book.partition.section.name)
 
@@ -206,6 +245,8 @@ def map(request): # View for displaying details of position about books
 
     zipped_books = zip(user_basket, sections)
     return render(request, 'website/maps.html', {'basket': zipped_books})
+
+
 @login_required
 def leds(request): # Non-user view for turning on LEDs and updating the states of books
 
@@ -227,8 +268,9 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         #Turns on LEDs
         LED_on(book)
         
-    show_book_order(Partition.objects.get(pk=basket[0].partition.id))
+    #show_book_order(Partition.objects.get(pk=basket[0].partition.id))
     return redirect('off')
+
 
 @login_required
 def off(request):
@@ -237,6 +279,7 @@ def off(request):
         return redirect('homepage')
     else:
         return render(request, 'website/off.html', {"basket": basket})
+
 
 @login_required
 def leds_off(request,book_id): # Placeholder view to simulate pressing of buttons, with changes of states included
@@ -281,11 +324,13 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
 
     return redirect('off')
 
+
 def is_master(user): # Function to determine if the 'master' superuser is logged in
     if user.username == 'master' and user.is_superuser:
         return True
     else:
         return False
+
 
 @user_passes_test(is_master)
 def delete_book(request, book_id): # Non-user view which deletes book from database
@@ -293,6 +338,7 @@ def delete_book(request, book_id): # Non-user view which deletes book from datab
     if book.book_state == 2:
         book.delete()
     return redirect('homepage')
+
 
 @user_passes_test(is_master)
 def add_book(request): # Master-only view which allows new book to be created
