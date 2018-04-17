@@ -220,15 +220,16 @@ def map(request): # View for displaying details of position about books
                 if len(user_basket) == 0:
                     return redirect('homepage')
             else:
-                book.partition = found_partitions[i]
-                partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id)
-                partition_books = sorted(partition_books, key=lambda p: p.partition_depth, reverse=True)
-                if partition_books == []:
-                    book.partition_depth = 0
-                else:
-                    book.partition_depth = partition_books[0].partition_depth + partition_books[0].book_width
+                partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id).exclude(book_state=6)
+                book.partition_depth = 0
+                for partition_book in partition_books: # Adds width of all books on partition at that time
+                    book.partition_depth += partition_book.book_width
+                    book.save()
+                for books in returning_basket[:i-1]: # Adds widths of all books that are going to be on before
+                    if books.partition == book.partition:
+                        book.partition_depth += books.book_width
                 book.save()
-                i+= 1
+            i+= 1
         # Adds section of all books to the list of sections for HMTL
         sections.append(book.partition.section.name)
 
@@ -268,7 +269,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         #Turns on LEDs
         LED_on(book)
         
-    #show_book_order(Partition.objects.get(pk=basket[0].partition.id))
+    show_book_order(Partition.objects.get(pk=basket[0].partition.id))
     return redirect('off')
 
 
@@ -320,6 +321,12 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
     book.save()
     partition.save()
     LED_off(book)
+
+    # LED update feature, updates LED position when books taken
+    LED_books = Book.objects.filter(partition=partition, book_state=1) | Book.objects.filter(partition=partition, book_state=3)
+    for book in LED_books:
+        LED_off(book)
+        LED_on(book)
 
 
     return redirect('off')
