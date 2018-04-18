@@ -28,6 +28,7 @@ class Book(models.Model):
 
     title = models.CharField(max_length=50)
     author = models.CharField(max_length=30)
+    picture = models.CharField(max_length=50, default="")
     partition = models.ForeignKey('Partition', on_delete=models.SET(0), default=0)
     book_state = models.IntegerField(choices=states, default=0)
     book_width = models.IntegerField()
@@ -49,5 +50,6 @@ class Partition(models.Model):
 
 class Section(models.Model):
     name = models.CharField(max_length=1)
+    #picture = models.CharField(max_length=50, default="")
     def __str__(self):
         return self.name

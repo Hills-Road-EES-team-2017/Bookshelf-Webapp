@@ -16,13 +16,14 @@
 <h1>Map page</h1>
 
 {% for book, section in basket %}
+<<<<<<< HEAD
 <strong>{{book.title}}</strong>
 <br>
 Section: {{ section }}
-{% if book.picture %}
-      <img src="{% static 'sections/'|add:picture %}" alt="">
-    {% endif %}
-
+=======
+<h>{{book.title}}</h>
+Section: {{ section }}<img src="/static/Section-A" class="img-rounded" height="100" alt="Library Map">
+>>>>>>> Added Bootstrap to the website design
 <br>
 colour: {{ book.get_colour_display }} <br>
 <br>

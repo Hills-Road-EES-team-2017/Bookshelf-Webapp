@@ -1,0 +1,54 @@
+{% extends 'website/base.html' %}
+
+{% block title %}Homepage{% endblock %}
+
+{% block body %}
+<head><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+</head>
+<h1>Welcome to the homepage</h1>
+
+{% if add_button %}
+<a href="{% url 'add_book' %}">Add new book</a>
+{% endif %}
+
+<form action="{% url 'homepage' %}" method="post">
+{% csrf_token %}
+    <p><searchbar>Search for a title or author:</searchbar>
+        <br>
+        <input type="text" name="search" value={{searched}}>
+        <input type="submit" value="Search" />
+    </p>
+
+</form>
+
+{% if book_list %}
+    <table class="table table-hover">
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>State</th>
+        </tr>
+        {% for book in book_list %}
+        <tr>           
+            <td>
+                <a data-toggle="tooltip" title="add your book description here" href="{% url 'detail' book.id %}">{{ book.title }}</a>
+            </td>
+            <td>{{ book.author }}</td>
+            {% if book.book_state == 0 %}
+                <td class="available">{{book.get_book_state_display}}</td>
+            {% elif book.book_state == 2 %}
+                <td class="taken">{{book.get_book_state_display}}</td>
+            {% elif book.book_state == 4 %}
+                <td class="reserved">{{book.get_book_state_display}}</td>
+            {% else %}
+                <td class="interim">unavailable</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+{% endblock %}

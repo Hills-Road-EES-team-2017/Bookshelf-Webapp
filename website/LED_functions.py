@@ -1,16 +1,16 @@
 import RPi.GPIO as GPIO
 import time
 import spidev
-spi = spidev.SpiDev()
-spi.open(0,1)
-spi.max_speed_hz = 1000000
-spi.bits_per_word = 8
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(11, GPIO.OUT)
-GPIO.setup(16,GPIO.IN)
-GPIO.setup(18,GPIO.IN)
-GPIO.setup(22,GPIO.IN)
-GPIO.setwarnings(False)
+#spi = spidev.SpiDev()
+#spi.open(0,1)
+#spi.max_speed_hz = 1000000
+#spi.bits_per_word = 8
+#GPIO.setmode(GPIO.BOARD)
+#GPIO.setup(11, GPIO.OUT)
+#GPIO.setup(16,GPIO.IN)
+#GPIO.setup(18,GPIO.IN)
+#GPIO.setup(22,GPIO.IN)
+#GPIO.setwarnings(False)
 
 speed = 0.0000025
 number_of_LEDs = 60
@@ -33,6 +33,8 @@ def initialise():
              send_32bits(strip_number, LEDs[strip_number][LED_number])
          #End frame - all 1s
          send_32bits(strip_number, 0x11111111)
+def initialise():
+  pass
 
 def send_32bits(shelf, data):
     
