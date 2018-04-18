@@ -1,14 +1,19 @@
 {% extends 'website/base.html' %}
+{% load static %}
 
 {% block title %}{{ book.title }}{% endblock %}
+
 
 {% block body %}
 <info>
     <h1>{{ book.title }}</h1>
+    {% if book.picture %}
+      <img src="{% static 'book_pics/'|add:book.picture %}" alt="">
+    {% endif %}
     {% if taking == 0%}
-    <a href="{% url 'update_basket' book_id=book.id %}">Take book</a>
+    <a href="{% url 'update_basket' book_id=book.id %}"><button type="button" class="btn btn-success">Take book</button></a>   
     {% elif taking == 1%}
-    <a href="{% url 'update_basket' book_id=book.id %}">Return book</a>
+    <a href="{% url 'update_basket' book_id=book.id %}"><button type="button" class="btn btn-success">Return book</button></a>
         {% if master %}
         <br>
         <br>
@@ -16,8 +21,10 @@
         {% endif %}
     {% else %}
     <div class="container">
-  <div class="jumbotron">
+    <div class="jumbotron">
     <a>Sorry, this book is <p class="text-danger">unavailable</p>.</a>
     {% endif %}
+    </div>
+    </div>
 </info>
 {% endblock %}
