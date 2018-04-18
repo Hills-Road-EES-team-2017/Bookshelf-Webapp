@@ -9,22 +9,22 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Map page</title>
+    <title>Library Map</title>
 </head>
 
 <body>
-<h1>Map page</h1>
+<h1>Library Map</h1>
 
 {% for book, section in basket %}
 <strong>{{book.title}}</strong>
 <br>
 Section: {{ section }}<img src="/static/Section-A" class="img-rounded" height="100" alt="Library Map">
 <br>
-colour: {{ book.get_colour_display }} <br>
+The LED for this book will be <b>{{ book.get_colour_display }}</b> <br>
 <br>
 {%endfor%}
-
-<a href="{% url 'leds' %}">Done</a>
+Once you finish checking out, you will be logged out and can go return or retrieve your books. <br>
+<a href="{% url 'leds' %}">Finish checkout</a>
 
 </body>
 </html>

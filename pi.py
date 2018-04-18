@@ -1,8 +1,6 @@
-import RPi.GPIO as GPIO
-import time
-import urllib3
 import requests
-import sys
+import time
+import RPi.GPIO as GPIO
 import spidev
 spi = spidev.SpiDev()
 spi.open(0,1)

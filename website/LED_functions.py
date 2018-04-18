@@ -1,5 +1,4 @@
 import RPi.GPIO as GPIO
-import time
 import spidev
 spi = spidev.SpiDev()
 spi.open(0,1)
