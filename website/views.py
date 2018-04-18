@@ -3,6 +3,7 @@ from django.template import loader
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.views.decorators.csrf import csrf_exempt
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
 from .forms import AddBookForm
@@ -10,17 +11,15 @@ from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 
 
 
-#def initialise():
-#    pass
-
-#def LED_function(shelf,distance,colour):
-#    colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-#    LED = int(distance/16)
-#    LEDs[shelf][LED] = colourDict[colour]
-#    print(LED)
-#    print()
-
-
+# def initialise():
+#     pass
+#
+# def LED_function(shelf,distance,colour):
+#     colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
+#     LED = int(distance/16)
+#     LEDs[shelf][LED] = colourDict[colour]
+# #    print(LED)
+# #    print()
 
 initialise()
 
@@ -40,11 +39,10 @@ def pirequest(request, colour):
     try:
         print(colour)
         book = Book.objects.filter(colour=colour, book_state=1)|Book.objects.filter(colour=colour,book_state=3)
+        return redirect('leds_off', book_id=book[0].id)
     except:
         print('Error pressing button?....')
         return redirect('homepage')
-    else:
-        return redirect('leds_off', book_id=book[0].id)
 
 
 def show_book_order(partition): # For testing return mechanism
@@ -103,6 +101,7 @@ def taken(request): # View for list of user's taken books
 
 
 @login_required
+@csrf_exempt
 def homepage(request): # View for list of all books in library
     book_list = []
     search = ""
@@ -110,7 +109,7 @@ def homepage(request): # View for list of all books in library
 
 
     try: # Inital load of page will yield error, as there is no post request
-        search = request.POST['search']
+        search = request.GET['search']
         # Retrieves list of all books containing search (default = "")
         book_list = Book.objects.filter(title__icontains=search) | Book.objects.filter(author__icontains=search)
     except:
@@ -270,7 +269,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         LED_on(book)
         
     show_book_order(Partition.objects.get(pk=basket[0].partition.id))
-    return redirect('off')
+    return redirect('logout')
 
 
 @login_required
@@ -282,7 +281,7 @@ def off(request):
         return render(request, 'website/off.html', {"basket": basket})
 
 
-@login_required
+#@login_required
 def leds_off(request,book_id): # Placeholder view to simulate pressing of buttons, with changes of states included
     AVAILABLE = 0
     TAKING = 1

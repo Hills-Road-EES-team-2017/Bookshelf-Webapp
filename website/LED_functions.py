@@ -41,15 +41,16 @@ def send_32bits(shelf, data):
         GPIO.output(11, GPIO.LOW)
     else:
         GPIO.output(11, GPIO.HIGH)
-    
+
     send_data[0] = (data >> 24) & 0x000000FF
     spi.xfer(send_data)
     send_data[0] = (data >> 16) & 0x000000FF
     spi.xfer(send_data)
     send_data[0] = (data >> 8) & 0x000000FF
     spi.xfer(send_data)
-    send_data[0] = (data >> 0) & 0x000000FF 
+    send_data[0] = (data >> 0) & 0x000000FF
     spi.xfer(send_data)
+    # pass
                 
 def LED_function(shelf, distance, colour):
     print(shelf, distance, colour)

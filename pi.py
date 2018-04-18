@@ -25,33 +25,16 @@ def API_Get_Button():
         return "Y"
     return None
 
+# def API_Get_Button():
+#     return input()
 
-#http = urllib3.PoolManager()
-#login_data = dict(login='ledpi', password='ledpassword')
-#url = "http://www.eeslibrary.com:8000/"
-#session = requests.session()
-#r = session.post(url, data=login_data)
-
-url = 'http://www.eeslibrary.com:8000/login/'
-client = requests.session()
-#client.get(url)
-#if 'crsftoken' in client.cookies:
-#    crsftoken = client.cookies['crsftoken']
-#login_data = dict(username='ledpi', password='ledpassword', crsfmiddlewaretoken=crsftoken, next='/')
-login_data = dict(username='ledpi', password='ledpassword', next='/')
-r = client.post(url, data=login_data, headers=dict(Referer=url))
-print("Logged in")
 
 while True:
     colour = API_Get_Button()
     if colour:
-        print(colour, "button pressed")
+        client = requests.session()
+        #print(colour, "button pressed")
         url = 'http://www.eeslibrary.com:8000/off/'+colour+'/'
-
-        #r = http.request('GET', url)
-        #r2 = session.get(url)
         r2 = client.get(url)
-        
-
-        print(colour, "web requested")
+        #print(colour, "web requested")
         time.sleep(0.3)

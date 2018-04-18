@@ -6,11 +6,5 @@ from channels.auth import AuthMiddlewareStack
 #from website.consumers import WSConsumer
 
 application = ProtocolTypeRouter({
-    "websocket": AuthMiddlewareStack(
-        URLRouter([
-            # standard path() or url() entries to consumer classes
-        # path('ws/', WSConsumer)
-        ]),
-    ),
 
 })
