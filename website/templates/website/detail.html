@@ -8,16 +8,15 @@
 <info>
     <h1>{{ book.title }}</h1>
     {% if book.picture %}
-      <img src="{% static 'book_pics/'|add:book.picture %}" alt="">
+    <p><img src="{% static 'book_pics/'|add:book.picture %}" alt=""></p>
     {% endif %}
+    <p>{{ book.description}}</p>
     {% if taking == 0%}
-    <a href="{% url 'update_basket' book_id=book.id %}"><button type="button" class="btn btn-success">Take book</button></a>   
+    <p><a href="{% url 'update_basket' book_id=book.id %}"><button type="button" class="btn btn-success">Take book</button></a></p>
     {% elif taking == 1%}
-    <a href="{% url 'update_basket' book_id=book.id %}"><button type="button" class="btn btn-success">Return book</button></a>
+    <p><a href="{% url 'update_basket' book_id=book.id %}"><button type="button" class="btn btn-success">Return book</button></a></p>
         {% if master %}
-        <br>
-        <br>
-        <a href="{% url 'delete_book' book_id=book.id%}">Delete book</a>
+    <p><a href="{% url 'delete_book' book_id=book.id%}"><button type="button" class="btn btn-success">Delete book</button></a></p>
         {% endif %}
     {% else %}
     <div class="container">

@@ -12,23 +12,37 @@
     <title>Library Map</title>
 </head>
 
+{% load static %}
+
 <body>
 <h1>Library Map</h1>
 
 {% for book, section in basket %}
 <strong>{{book.title}}</strong>
-<br>
-Section: {{ section }}
-{% if book.picture %}
-      <img src="{% static 'sections/'|add:picture %}" alt="">
-    {% endif %}
+  <br>
+  You can find the shelf in section <b>{{ section }}</b>
+  <br>
+  <img src="{% static 'sections/'|add:book.partition.section.picture %}" alt="">
 
-<br>
-The LED for this book will be <b>{{ book.get_colour_display }}</b> <br>
-<br>
-{%endfor%}
-Once you finish checking out, you will be logged out and can go return or retrieve your books. <br>
-<a href="{% url 'leds' %}">Finish checkout</a>
 
+  <br>
+  The LED for this book will be <b>{{ book.get_colour_display }}</b> <br>
+  <br>
+
+{% endfor %}
+{% if unreturned %}
+We're sorry, we couldn't find a space for these books at the moment, please try again later.
+{% endif%}
+<ul>
+{% for book in unreturned %}
+<li>{{book.title}}</li>
+  {% endfor %}
+</ul>
+{% if not basket %}
+<a href="{% url 'homepage' %}"><button type="button" class="btn btn-success">Okay</button></a>
+{% else %}
+Once you've finished checking out, you can go retreive or return your books. <br>
+<a href="{% url 'leds' %}"><button type="button" class="btn btn-success">Checkout</button></a>
+{% endif %}
 </body>
 </html>

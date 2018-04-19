@@ -22,11 +22,11 @@
             {% else %}
             <td>{{book.get_book_state_display}}</td>
             {% endif %}
-            <td><a href="{% url 'delete_basket' book_id=book.id %}">Remove from basket</a></td>
+            <td><a href="{% url 'delete_basket' book_id=book.id %}"><button type="button" class="btn btn-success">Remove from basket</button></a></td>
         </tr>
         {% endfor %}
     </table>
-    <a href="{% url 'map' %}">Checkout</a>
+    <a href="{% url 'map' %}"><button type="button" class="btn btn-success">Checkout</button></a>
 {% else %}
 <p>You have no books in your basket!</p>
 {% endif %}

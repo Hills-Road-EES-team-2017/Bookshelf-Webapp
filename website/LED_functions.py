@@ -1,15 +1,15 @@
 import RPi.GPIO as GPIO
 import spidev
-#spi = spidev.SpiDev()
-#spi.open(0,1)
-#spi.max_speed_hz = 1000000
-#spi.bits_per_word = 8
-#GPIO.setmode(GPIO.BOARD)
-#GPIO.setup(11, GPIO.OUT)
-#GPIO.setup(16,GPIO.IN)
-#GPIO.setup(18,GPIO.IN)
-#GPIO.setup(22,GPIO.IN)
-#GPIO.setwarnings(False)
+spi = spidev.SpiDev()
+spi.open(0,1)
+spi.max_speed_hz = 1000000
+spi.bits_per_word = 8
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(11, GPIO.OUT)
+GPIO.setup(16,GPIO.IN)
+GPIO.setup(18,GPIO.IN)
+GPIO.setup(22,GPIO.IN)
+GPIO.setwarnings(False)
 
 speed = 0.0000025
 number_of_LEDs = 60
@@ -37,21 +37,21 @@ def initialise():
 
 def send_32bits(shelf, data):
     
-    send_data = [0]
-    if (shelf == 0):
-        GPIO.output(11, GPIO.LOW)
-    else:
-        GPIO.output(11, GPIO.HIGH)
-
-    send_data[0] = (data >> 24) & 0x000000FF
-    spi.xfer(send_data)
-    send_data[0] = (data >> 16) & 0x000000FF
-    spi.xfer(send_data)
-    send_data[0] = (data >> 8) & 0x000000FF
-    spi.xfer(send_data)
-    send_data[0] = (data >> 0) & 0x000000FF
-    spi.xfer(send_data)
-    # pass
+    # send_data = [0]
+    # if (shelf == 0):
+    #     GPIO.output(11, GPIO.LOW)
+    # else:
+    #     GPIO.output(11, GPIO.HIGH)
+    #
+    # send_data[0] = (data >> 24) & 0x000000FF
+    # spi.xfer(send_data)
+    # send_data[0] = (data >> 16) & 0x000000FF
+    # spi.xfer(send_data)
+    # send_data[0] = (data >> 8) & 0x000000FF
+    # spi.xfer(send_data)
+    # send_data[0] = (data >> 0) & 0x000000FF
+    # spi.xfer(send_data)
+    pass
                 
 def LED_function(shelf, distance, colour):
     print(shelf, distance, colour)

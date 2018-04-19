@@ -1,0 +1,13 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+
+{% block body %}
+<h1>We're sorry</h1>
+<p>You are unable to check out more books at the moment.
+    You may be able to add more if you wait a few minutes,
+    or you can proceed with the books in your basket</p>
+<a href="{% url 'basket' %}"><button type="button" class="btn btn-success">Okay</button></a>
+{% endblock %}

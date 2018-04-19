@@ -159,8 +159,11 @@ def update_basket(request, book_id): # Non-user view for updating the record of 
     RETURNING_BASKET = 6
     BASKET_LIMIT = 3
     user_basket = get_basket(request.user)
-    if len(user_basket) >= BASKET_LIMIT:
-        return redirect('homepage')
+    led_books = Book.objects.filter(partition__section=book.partition.section).exclude(pk=book.id)  # Books in same section
+    led_books = led_books.filter(book_state=1) | led_books.filter(book_state=3)  # Books with colours in use and same section
+
+    if len(user_basket)+len(led_books) >= BASKET_LIMIT:
+        return render(request, 'website/full_basket.html')
     if book.book_state == AVAILABLE: # If taking book
         # Set to taking
         book.book_state = TAKING_BASKET
@@ -203,11 +206,9 @@ def map(request): # View for displaying details of position about books
             returning_basket.append(book)
     found_partitions = find_partitions_for_returning_books(returning_basket, Partition.objects.all())
 
-
-
-
     sections = []
     i = 0
+    unreturned_book = []
     for book in user_basket:
         # Assigns a new partition to books being returned
         if book in returning_basket:
@@ -216,8 +217,9 @@ def map(request): # View for displaying details of position about books
                 user_basket.pop(i)
                 book.book_state = 2
                 book.save()
-                if len(user_basket) == 0:
-                    return redirect('homepage')
+                unreturned_book.append(book)
+                # if len(user_basket) == 0:
+                #     pass
             else:
                 partition_books = Book.objects.filter(partition=found_partitions[i]).exclude(book_state=2).exclude(pk=book.id).exclude(book_state=6)
                 book.partition_depth = 0
@@ -228,12 +230,12 @@ def map(request): # View for displaying details of position about books
                     if books.partition == book.partition:
                         book.partition_depth += books.book_width
                 book.save()
+                # Adds section of all books to the list of sections for HMTL
+                sections.append(book.partition.section.name)
             i+= 1
-        # Adds section of all books to the list of sections for HMTL
-        sections.append(book.partition.section.name)
 
     colours = ["R", "Y", "G", "C", "B", "M", "W"]
-    led_books = Book.objects.filter(partition__section=book.partition.section).exclude(pk=book.id) # Books in same section
+    led_books = Book.objects.filter(partition__section__name='A') # Books in same section
     led_books = led_books.filter(book_state=1)|led_books.filter(book_state=3) # Books with colours in use and same section
     for basket_book in user_basket:
         for live_book in led_books:
@@ -242,9 +244,9 @@ def map(request): # View for displaying details of position about books
         basket_book.colour = colours[0]
         basket_book.save()
         colours.remove(colours[0])
-
     zipped_books = zip(user_basket, sections)
-    return render(request, 'website/maps.html', {'basket': zipped_books})
+    return render(request, 'website/maps.html', {'basket': zipped_books, 'unreturned': unreturned_book})
+
 
 
 @login_required
@@ -355,7 +357,8 @@ def add_book(request): # Master-only view which allows new book to be created
             new_title = form.cleaned_data['new_title']
             new_author = form.cleaned_data['new_author']
             new_width = form.cleaned_data['new_width']
-            new_book = Book(title=new_title, author=new_author, partition=Partition.objects.all()[0], book_state=2, book_width=new_width, partition_depth=100, customer=request.user, last_taken=datetime.now(), colour='R')
+            new_description = form.cleaned_data['new_description']
+            new_book = Book(title=new_title, author=new_author, description=new_description, partition=Partition.objects.all()[0], book_state=2, book_width=new_width, partition_depth=100, customer=request.user, last_taken=datetime.now(), colour='R')
             new_book.save()
             return redirect('homepage')
         else:
