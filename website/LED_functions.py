@@ -32,26 +32,25 @@ def initialise():
              send_32bits(strip_number, LEDs[strip_number][LED_number])
          #End frame - all 1s
          send_32bits(strip_number, 0x11111111)
-def initialise():
-  pass
+
 
 def send_32bits(shelf, data):
     
-    # send_data = [0]
-    # if (shelf == 0):
-    #     GPIO.output(11, GPIO.LOW)
-    # else:
-    #     GPIO.output(11, GPIO.HIGH)
-    #
-    # send_data[0] = (data >> 24) & 0x000000FF
-    # spi.xfer(send_data)
-    # send_data[0] = (data >> 16) & 0x000000FF
-    # spi.xfer(send_data)
-    # send_data[0] = (data >> 8) & 0x000000FF
-    # spi.xfer(send_data)
-    # send_data[0] = (data >> 0) & 0x000000FF
-    # spi.xfer(send_data)
-    pass
+    send_data = [0]
+    if (shelf == 0):
+        GPIO.output(11, GPIO.LOW)
+    else:
+        GPIO.output(11, GPIO.HIGH)
+
+    send_data[0] = (data >> 24) & 0x000000FF
+    spi.xfer(send_data)
+    send_data[0] = (data >> 16) & 0x000000FF
+    spi.xfer(send_data)
+    send_data[0] = (data >> 8) & 0x000000FF
+    spi.xfer(send_data)
+    send_data[0] = (data >> 0) & 0x000000FF
+    spi.xfer(send_data)
+    # pass
                 
 def LED_function(shelf, distance, colour):
     print(shelf, distance, colour)

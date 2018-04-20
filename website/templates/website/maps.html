@@ -16,18 +16,13 @@
 
 <body>
 <h1>Library Map</h1>
-
-{% for book, section in basket %}
+{% for book in basket %}
 <strong>{{book.title}}</strong>
-  <br>
-  You can find the shelf in section <b>{{ section }}</b>
-  <br>
-  <img src="{% static 'sections/'|add:book.partition.section.picture %}" alt="">
+<br>
+You can find the shelf in section <b>{{ book.partition.section }}</b>
+<p><img src="{% static 'sections/'|add:book.partition.section.picture %}" alt="No map available??"></p>
+<p>The LED for this book will be <b>{{ book.get_colour_display }}</b></p>
 
-
-  <br>
-  The LED for this book will be <b>{{ book.get_colour_display }}</b> <br>
-  <br>
 
 {% endfor %}
 {% if unreturned %}
