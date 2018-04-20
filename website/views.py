@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.views.decorators.csrf import csrf_exempt
 from .models import Book, Partition
 from .algorithms import find_partitions_for_returning_books
-from .forms import AddBookForm
+from .forms import AddBookForm, SearchBookForm
 from .LED_functions import initialise, send_32bits, LED_function, LED_colour_off
 
 
@@ -107,16 +107,29 @@ def homepage(request): # View for list of all books in library
     search = ""
     add_button = is_master(request.user) # For adding the 'add book' button if on certain account
 
+    if request.method == 'GET':
+        form = SearchBookForm(request.GET)
+        # check whether it's valid:
+        if form.is_valid():
+            search = form.cleaned_data['search']
+            # Retrieves list of all books containing search (default = "")
+            book_list = Book.objects.filter(title__icontains=search) | Book.objects.filter(author__icontains=search)
+        else:
+            return render(request, 'website/homepage.html', {'form': form,'book_list': book_list, 'current_user': request.user.username, 'searched': search, 'add_button': add_button})
+    else:
+        form = SearchBookForm()
 
-    try: # Inital load of page will yield error, as there is no post request
-        search = request.GET['search']
-        # Retrieves list of all books containing search (default = "")
-        book_list = Book.objects.filter(title__icontains=search) | Book.objects.filter(author__icontains=search)
-    except:
-        pass
+    return render(request, 'website/homepage.html', {'form': form, 'book_list': book_list, 'current_user': request.user.username, 'searched': search, 'add_button': add_button})
+
+    # try: # Inital load of page will yield error, as there is no post request
+    #     search = request.GET['search']
+    #     # Retrieves list of all books containing search (default = "")
+    #     book_list = Book.objects.filter(title__icontains=search) | Book.objects.filter(author__icontains=search)
+    # except:
+    #     pass
 
     # Displays homepage.html where book_list is the values from line above and states is the possible string states
-    return render(request, 'website/homepage.html', {'book_list': book_list, 'current_user': request.user.username, 'searched': search, 'add_button': add_button})
+    # return render(request, 'website/homepage.html', {'book_list': book_list, 'current_user': request.user.username, 'searched': search, 'add_button': add_button})
 
 
 @login_required
@@ -244,8 +257,7 @@ def map(request): # View for displaying details of position about books
         basket_book.colour = colours[0]
         basket_book.save()
         colours.remove(colours[0])
-    zipped_books = zip(user_basket, sections)
-    return render(request, 'website/maps.html', {'basket': zipped_books, 'unreturned': unreturned_book})
+    return render(request, 'website/maps.html', {'basket': user_basket, 'unreturned': unreturned_book})
 
 
 
@@ -334,7 +346,7 @@ def leds_off(request,book_id): # Placeholder view to simulate pressing of button
 
 
 def is_master(user): # Function to determine if the 'master' superuser is logged in
-    if user.username == 'master' and user.is_superuser:
+    if user.is_superuser:# and user.username == 'master':
         return True
     else:
         return False

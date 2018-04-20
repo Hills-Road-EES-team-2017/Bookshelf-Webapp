@@ -29,7 +29,7 @@ class Book(models.Model):
     title = models.CharField(max_length=50)
     author = models.CharField(max_length=30)
     picture = models.CharField(max_length=50, default="blank_book.png")
-    description = models.CharField(max_length=200, default="Description not yet set")
+    description = models.CharField(max_length=500, default="Description not yet set")
     partition = models.ForeignKey('Partition', on_delete=models.SET(0), default=0)
     book_state = models.IntegerField(choices=states, default=0)
     book_width = models.IntegerField()

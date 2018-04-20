@@ -16,11 +16,9 @@
 
 <form action="{% url 'homepage' %}" method="get">
 {% csrf_token %}
-    <p><searchbar>Search for a title or author:</searchbar>
-        <br>
-        <input type="text" name="search" value={{searched}}>
-        <input type="submit" value="Search" />
-    </p>
+    <p>Search for a title or author:<br>
+    {{ form.search }}
+    <input type="submit" value="Search" /></p>
 
 </form>
 
@@ -35,7 +33,7 @@
         <tr>
             
             <td>
-                <a data-toggle="tooltip" title="add your book description here" href="{% url 'detail' book.id %}">{{ book.title }}</a>
+                <a data-toggle="tooltip" title="Click to see more" href="{% url 'detail' book.id %}">{{ book.title }}</a>
             </td>
             
             
@@ -52,6 +50,8 @@
         </tr>
         {% endfor %}
     </table>
+{% else %}
+Sorry, there are no books matching that search.
 {% endif %}
 
 {% endblock %}
