@@ -45,12 +45,103 @@ def pirequest(request, colour):
         return redirect('homepage')
 
 
+def help_me():
+    print()
+    print("~~~~~~~~ HELP PAGE ~~~~~~~~")
+    print("show_book_order(partition)")
+    print("increase_book_size(books,value)")
+    print("scroll(books,attribute)")
+    print("mass_take(partition)")
+    print("mass_return(books,partition)")
+    print()
+
+
+def setup():
+    from website.models import Book, Partition
+    from django.contrib.auth.models import User
+    user = User.objects.get(username='master')
+    partition = Partition.objects.all()[0]
+    books = Book.objects.filter(partition=partition,book_state=0)
+    show_book_order(partition)
+    return user,books,partition
+
 def show_book_order(partition): # For testing return mechanism
     books = Book.objects.filter(partition=partition.id).exclude(book_state=2)
     ordered_books = sorted(books, key=lambda p: p.partition_depth, reverse=False)
     for book in ordered_books:
-        print(book.title,book.book_width,book.partition_depth)
+        distance = partition.shelf_distance + book.partition_depth + int(book.book_width / 2)
+        LEDposition = int(distance/16.5)
+        print(book.title,book.book_width,book.partition_depth, LEDposition)
     print()
+
+def increase_book_size(books, value):
+    if (books[len(books)-1].partition_depth + value*(len(books)-1)+books[len(books)-1].book_width+value)>1000:
+        print("Warning, book size too great after transformation")
+    else:
+        i = 0
+        for book in books:
+            book.book_width += value
+            book.partition_depth = book.partition_depth + value*i
+            book.save()
+            i += 1
+
+
+def scroll(books, attribute):
+    if attribute == 'title':
+        for book in books:
+            print(book.title)
+            input()
+    elif attribute == 'book_width':
+        for book in books:
+            print(book.book_width)
+            input()
+    elif attribute == 'book_state':
+        for book in books:
+            print(book.book_state)
+            input()
+    elif attribute == 'partition_depth':
+        for book in books:
+            print(book.partition_depth)
+            input()
+    elif attribute == 'customer':
+        for book in books:
+            print(book.customer)
+            input()
+    else:
+        print('Attribute not available:')
+        print('title, book_width, book_state, partition_depth, customer')
+
+
+def mass_take(partition):
+    books = Book.objects.filter(partition=partition.id).exclude(book_state=2)
+    ordered_books = sorted(books, key=lambda p: p.partition_depth, reverse=False)
+    for book in ordered_books:
+        partition.partition_space += book.book_width
+        book.book_state = 2
+        book.save()
+        partition.save()
+
+
+def mass_return(books, partition):
+    book_list =[]
+    length = 0
+    for book in books:
+        book_list.append(book)
+        length += book.book_width
+    print(length)
+    while length>=partition.partition_space:
+        removed = book_list.pop()
+        length -= removed.book_width
+        print(removed, "removed")
+        print(length, partition.partition_space)
+    print()
+    for book in book_list:
+        book.partition_depth = 1000 - partition.partition_space
+        partition.partition_space -= book.book_width
+        book.book_state = 0
+        book.save()
+        partition.save()
+    show_book_order(partition)
 
 
 def get_basket(user): # Retrieves list of books in the user's basket
@@ -78,6 +169,7 @@ def LED_on(book):  # Formulates appropriate input for strips function
     shelf = shelf_number.index(partition)
     distance = partition.shelf_distance + book.partition_depth + int(book.book_width/2)
     colour = book.colour
+    print(book.title, 'distance:', distance, colour)
     LED_function(shelf, distance, colour)
 
 
@@ -282,7 +374,7 @@ def leds(request): # Non-user view for turning on LEDs and updating the states o
         #Turns on LEDs
         LED_on(book)
         
-    show_book_order(Partition.objects.get(pk=basket[0].partition.id))
+    # show_book_order(Partition.objects.get(pk=basket[0].partition.id))
     return redirect('logout')
 
 

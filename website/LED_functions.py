@@ -53,12 +53,12 @@ def send_32bits(shelf, data):
     # pass
                 
 def LED_function(shelf, distance, colour):
-    print(shelf, distance, colour)
-    print()
+    # print(shelf, distance, colour)
+    # print()
     #API LEDs
     #update array
     colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}
-    LEDposition = int (distance/16.5)
+    LEDposition = int(distance/16.5)
     
     for i in range(int(len(LEDs[shelf])/2)): #Finds nearest LED not on already
         if LEDs[shelf][LEDposition+i] == 3758096384: #If equal to "O"
@@ -78,6 +78,7 @@ def LED_function(shelf, distance, colour):
         send_32bits(shelf, LEDs[shelf][LED_number])
     #End frame - all 1s
     send_32bits(shelf, 0x11111111)
+    print('LED', LED_number)
 
 def LED_colour_off(shelf, colour):
     colourDict = {"R":0xF00000FF,"B":0xF0FF0000,"W":0xFFF0F0F0,"O":0xE0000000,"C":0xF0F0F000,"Y":0xF0004488,"M":0xF0FF00FF,"G":0xF000FF00}

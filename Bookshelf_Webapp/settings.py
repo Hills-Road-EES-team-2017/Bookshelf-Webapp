@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = 'w0^%8k@-v!vk*7weyy5ell@rznfwji4r4ug#u#g2&$)lfo1p4v'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["www.eeslibrary.com", '192.168.137.2']
 
